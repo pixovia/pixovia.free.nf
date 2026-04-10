@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>System Update</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Universal Styles */
+    * { box-sizing: border-box; cursor: none !important; }
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; width: 100%;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+      transition: background-color 0.5s ease;
+    }
+
+    /* Windows 11 / 10 Modern Blue */
+    body.os-win11, body.os-win10 {
+      background: #0078d7;
+      color: white;
+    }
+
+    /* Windows 7 Style */
+    body.os-win7 {
+      background: #003399;
+      background: radial-gradient(circle, #005a9e 0%, #003399 100%);
+      color: white;
+    }
+
+    /* macOS Dark Mode */
+    body.os-mac {
+      background: #000;
+      color: #fff;
+    }
+
+    /* Linux / Ubuntu Style */
+    body.os-linux {
+      background: #2c001e;
+      color: #fff;
+    }
+
+    /* Logo Styling */
+    .os-logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 3rem;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));
+    }
+
+    /* Windows 11/10 specific loader */
+    .win-loader {
+      width: 60px; height: 60px;
+      border: 5px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 2rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Progress Bar */
+    #progress-wrapper {
+      width: 350px; height: 6px;
+      background: rgba(255,255,255,0.2);
+      margin-top: 25px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #progress-fill {
+      height: 100%; width: 0%;
+      background: #fff;
+      transition: width 0.5s ease-out;
+    }
+
+    #message {
+      font-size: 1.25rem;
+      font-weight: 300;
+      text-align: center;
+      max-width: 85%;
+      margin-top: 10px;
+    }
+
+    #percent {
+      font-size: 3.5rem;
+      margin-bottom: 5px;
+      font-weight: 100;
+    }
+
+    /* Light Theme Overrides */
+    body.theme-light { background: #fdfdfd !important; color: #111 !important; }
+    body.theme-light .win-loader { border-color: rgba(0,0,0,0.1); border-top-color: #0078d7; }
+    body.theme-light #progress-wrapper { background: rgba(0,0,0,0.1); }
+    body.theme-light #progress-fill { background: #0078d7; }
+    
+    /* Hide loader if OS is Mac (Mac uses just progress bar usually) */
+    body.os-mac .win-loader { display: none; }
+  </style>
+</head>
+<body>
+
+  <img id="logo" class="os-logo" src="" alt="System Logo">
+
+  <div id="loader" class="win-loader"></div>
+  
+  <div id="percent">0%</div>
+  
+  <div id="message">Working on updates...</div>
+
+  <div id="progress-wrapper">
+    <div id="progress-fill"></div>
+  </div>
+
+  <script>
+    // 1. Get Parameters
+    const params = new URLSearchParams(window.location.search);
+    const hours = parseFloat(params.get('hours')) || 0;
+    const minutes = parseFloat(params.get('minutes')) || 5;
+    const os = params.get('os') || 'win11';
+    const theme = params.get('theme') || 'dark';
+    const customMsg = params.get('message') || 'Please keep your computer on.';
+    const redirectTarget = params.get('click_redirect');
+
+    // 2. Logo Configuration
+    const logos = {
+      'win11': 'https://images.seeklogo.com/logo-png/40/3/windows-11-icon-logo-png_seeklogo-406208.png',
+      'win10': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Windows_logo_-_2012.png/500px-Windows_logo_-_2012.png',
+      'win7': 'https://www.vhv.rs/dpng/d/208-2087572_windows-7-start-button-png-png-freeuse-transparent.png',
+      'mac': {
+        'light': 'https://fakeupdate.com/assets/logos/apple-dark.webp',
+        'dark': 'https://fakeupdate.com/assets/logos/apple-light.webp'
+      },
+      'linux': {
+        'light': 'https://fakeupdate.com/assets/logos/linux-light.webp',
+        'dark': 'https://fakeupdate.com/assets/logos/linux-dark.webp'
+      }
+    };
+
+    // 3. Apply Theme & OS
+    document.body.classList.add(`os-${os}`);
+    if (theme === 'light') document.body.classList.add('theme-light');
+    
+    // Set Logo
+    const logoEl = document.getElementById('logo');
+    if (typeof logos[os] === 'string') {
+      logoEl.src = logos[os];
+    } else {
+      // Handle OS with theme-specific logos
+      logoEl.src = theme === 'light' ? logos[os].light : logos[os].dark;
+    }
+    
+    // Apply custom message
+    const msgEl = document.getElementById('message');
+    msgEl.innerText = customMsg;
+
+    // 4. Progress Logic
+    const totalDurationMs = ((hours * 60) + minutes) * 60 * 1000;
+    const startTime = Date.now();
+    const percentEl = document.getElementById('percent');
+    const fillEl = document.getElementById('progress-fill');
+
+    function updateUI() {
+      const elapsed = Date.now() - startTime;
+      let progress = (elapsed / totalDurationMs) * 100;
+      
+      if (progress > 100) progress = 100;
+      
+      const pFloor = Math.floor(progress);
+      percentEl.innerText = `${pFloor}%`;
+      fillEl.style.width = `${pFloor}%`;
+
+      if (progress < 100) {
+        requestAnimationFrame(updateUI);
+      } else {
+        msgEl.innerText = "Finishing updates... System will restart automatically.";
+      }
+    }
+
+    updateUI();
+
+    // 5. Interaction Logic
+    window.addEventListener('click', () => {
+      // Fullscreen attempt for realism
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      
+      // Redirect if specified
+      if (redirectTarget) {
+        window.location.href = redirectTarget;
+      }
+    });
+
+    // Handle ESC to exit
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.history.back();
+      }
+    });
+  </script>
+</body>
+</html>

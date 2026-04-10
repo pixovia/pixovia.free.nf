@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixovia World Chatroom</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100dvh;
+            overflow: hidden;
+        }
+        .chat-container {
+            height: calc(100dvh - 140px);
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom video styles for chat preview */
+        .chat-video-preview::-webkit-media-controls { display:none !important; }
+        
+        .modal-enter { animation: modalFade 0.3s ease-out; }
+        @keyframes modalFade {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Login/Registration Screen -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-6 hidden">
+        <div class="w-full max-w-md space-y-6">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-blue-400 mb-2">Pixovia</h1>
+                <p class="text-slate-400">Join the world conversation anonymously</p>
+            </div>
+            <div class="glass p-6 rounded-3xl space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Username</label>
+                    <input id="reg-username" type="text" placeholder="Choose a unique name..." class="w-full bg-slate-800 border-none rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none text-white">
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="setGender('male')" id="btn-male" class="flex-1 p-4 rounded-2xl border-2 border-blue-500 bg-blue-500/10 flex flex-col items-center transition-all">
+                        <img src="https://img.freepik.com/premium-vector/man-avatar-profile-picture-isolated-background-avatar-profile-picture-man_1293239-4841.jpg" class="w-12 h-12 rounded-full mb-2">
+                        <span class="text-sm">Male</span>
+                    </button>
+                    <button onclick="setGender('female')" id="btn-female" class="flex-1 p-4 rounded-2xl border-2 border-slate-700 bg-slate-800 flex flex-col items-center transition-all">
+                        <img src="https://img.freepik.com/premium-vector/young-man-avatar-character-due-avatar-man-vector-icon-cartoon-illustration_1186924-4438.jpg" class="w-12 h-12 rounded-full mb-2">
+                        <span class="text-sm">Female</span>
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs text-slate-500 ml-1">Social Links ids (Optional)</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="reg-ig" placeholder="Instagram" class="bg-slate-800/50 p-3 rounded-xl text-xs outline-none">
+                        <input id="reg-fb" placeholder="Facebook" class="bg-slate-800/50 p-3 rounded-xl text-xs outline-none">
+                        <input id="reg-x" placeholder="X (Twitter)" class="bg-slate-800/50 p-3 rounded-xl text-xs outline-none">
+                        <input id="reg-yt" placeholder="YouTube" class="bg-slate-800/50 p-3 rounded-xl text-xs outline-none">
+                    </div>
+                </div>
+                <button onclick="registerUser()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95">
+                    Start Chatting
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Screen -->
+    <header class="h-16 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-900/50 sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <div id="my-avatar" class="w-10 h-10 rounded-full border-2 border-blue-500 overflow-hidden"></div>
+            <div>
+                <h2 class="font-bold text-sm leading-tight" id="header-username">Pixovia World</h2>
+                <div class="flex items-center gap-1">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span class="text-[10px] text-slate-400">Online</span>
+                </div>
+            </div>
+        </div>
+        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition-colors">
+            <i class="fas fa-sign-out-alt text-xl"></i>
+        </button>
+    </header>
+
+    <main id="chat-box" class="chat-container overflow-y-auto px-4 py-6 flex flex-col gap-4 hide-scrollbar">
+        <!-- Messages will appear here -->
+    </main>
+
+    <!-- Input Area -->
+    <footer class="p-4 bg-slate-900 border-t border-slate-800 safe-area-bottom">
+        <div class="flex items-end gap-2 max-w-4xl mx-auto">
+            <div class="relative group">
+                <input type="file" id="file-input" class="hidden" accept="image/*,video/*,image/gif">
+                <button onclick="document.getElementById('file-input').click()" class="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-2xl text-blue-400 active:scale-90 transition-all">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <div id="upload-loading" class="absolute inset-0 bg-slate-800 rounded-2xl items-center justify-center hidden">
+                    <i class="fas fa-spinner fa-spin text-blue-400"></i>
+                </div>
+            </div>
+            <div class="flex-1 bg-slate-800 rounded-3xl px-4 py-1 flex items-center min-h-[48px]">
+                <textarea id="message-input" rows="1" placeholder="Type a message..." class="w-full bg-transparent border-none outline-none py-2 text-sm resize-none hide-scrollbar text-white"></textarea>
+            </div>
+            <button onclick="sendMessage()" class="w-12 h-12 flex items-center justify-center bg-blue-600 rounded-2xl text-white active:scale-90 transition-all shadow-lg shadow-blue-500/20">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Media Preview Modal -->
+    <div id="media-modal" class="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 hidden">
+        <button onclick="closeModal()" class="absolute top-6 right-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white text-2xl z-10">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="modal-content" class="max-w-full max-h-[80vh] flex flex-col items-center gap-4">
+            <!-- Media element injected here -->
+        </div>
+        <div class="absolute bottom-10 left-0 right-0 flex justify-center">
+            <a id="download-btn" href="#" download target="_blank" class="bg-blue-600 px-8 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-xl">
+                <i class="fas fa-download"></i> Download
+            </a>
+        </div>
+    </div>
+
+    <!-- User Profile Info Modal -->
+    <div id="user-info-modal" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 hidden">
+        <div class="w-full max-w-xs glass rounded-[32px] p-6 text-center modal-enter relative">
+            <button onclick="closeUserInfo()" class="absolute top-4 right-4 text-slate-500"><i class="fas fa-times"></i></button>
+            <img id="info-avatar" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-xl">
+            <h3 id="info-username" class="text-2xl font-bold mb-1">Username</h3>
+            <p id="info-gender" class="text-sm text-slate-400 mb-6 capitalize">Gender</p>
+            <div id="info-socials" class="flex justify-center gap-4">
+                <!-- Icons injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4Y2Z1c2ZmcG5jb3JsZG9neWt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NDEwMzQsImV4cCI6MjA4MzAxNzAzNH0.7lF1aYo4eP2by4wAnSCTpqhElgN6_TdPsItvQtxNGPI";
+        const supabase_chatroom = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let selectedGender = 'male';
+        const MALE_AVATAR = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-isolated-background-avatar-profile-picture-man_1293239-4841.jpg";
+        const FEMALE_AVATAR = "https://img.freepik.com/premium-vector/young-man-avatar-character-due-avatar-man-vector-icon-cartoon-illustration_1186924-4438.jpg";
+
+        // Initialization
+        window.onload = () => {
+            const cachedUser = localStorage.getItem('pixovia_user');
+            if (cachedUser) {
+                currentUser = JSON.parse(cachedUser);
+                startApp();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }
+        };
+
+        function setGender(g) {
+            selectedGender = g;
+            document.getElementById('btn-male').classList.toggle('border-blue-500', g === 'male');
+            document.getElementById('btn-male').classList.toggle('bg-blue-500/10', g === 'male');
+            document.getElementById('btn-female').classList.toggle('border-blue-500', g === 'female');
+            document.getElementById('btn-female').classList.toggle('bg-blue-500/10', g === 'female');
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('reg-username').value.trim();
+            if (!username) return alert("Username is required");
+
+            // Check if username exists in messages history
+            const { data, error } = await supabase_chatroom
+                .from('chatroom_messages')
+                .select('username')
+                .eq('username', username)
+                .limit(1);
+
+            if (data && data.length > 0) {
+                return alert("Username already taken. Please pick another.");
+            }
+
+            currentUser = {
+                username,
+                gender: selectedGender,
+                ig: document.getElementById('reg-ig').value.trim() || null,
+                fb: document.getElementById('reg-fb').value.trim() || null,
+                x: document.getElementById('reg-x').value.trim() || null,
+                yt: document.getElementById('reg-yt').value.trim() || null,
+                avatar: selectedGender === 'male' ? MALE_AVATAR : FEMALE_AVATAR
+            };
+
+            localStorage.setItem('pixovia_user', JSON.stringify(currentUser));
+            document.getElementById('auth-screen').classList.add('hidden');
+            startApp();
+        }
+
+        function startApp() {
+            document.getElementById('header-username').innerText = currentUser.username;
+            document.getElementById('my-avatar').innerHTML = `<img src="${currentUser.avatar}" class="w-full h-full object-cover">`;
+            
+            // Initial fetch
+            fetchMessages();
+
+            // Realtime subscription fix: ensure channel tracking is robust
+            supabase_chatroom
+                .channel('room-1')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chatroom_messages' }, payload => {
+                    if (payload.new) {
+                        renderMessage(payload.new);
+                        scrollToBottom();
+                    }
+                })
+                .subscribe();
+        }
+
+        async function fetchMessages() {
+            const { data, error } = await supabase_chatroom
+                .from('chatroom_messages')
+                .select('*')
+                .order('id', { ascending: true })
+                .limit(100);
+
+            if (data) {
+                const container = document.getElementById('chat-box');
+                container.innerHTML = '';
+                data.forEach(msg => renderMessage(msg));
+                scrollToBottom();
+            }
+        }
+
+        function renderMessage(msg) {
+            const container = document.getElementById('chat-box');
+            // Prevent duplicates if already rendered locally
+            if (document.getElementById(`msg-${msg.id}`)) return;
+
+            const isMe = msg.username === currentUser.username;
+            const avatar = msg.gender === 'female' ? FEMALE_AVATAR : MALE_AVATAR;
+
+            const div = document.createElement('div');
+            div.id = `msg-${msg.id || Date.now()}`;
+            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} items-end gap-2 animate-slide-up mb-2`;
+            
+            let mediaContent = '';
+            if (msg.file_url) {
+                const isVideo = msg.file_url.match(/\.(mp4|mov|webm|ogg)$/i);
+                if (isVideo) {
+                    mediaContent = `
+                        <div class="relative rounded-2xl overflow-hidden mb-1 cursor-pointer" onclick="openMedia('${msg.file_url}', 'video')">
+                            <video src="${msg.file_url}" autoplay loop muted playsinline class="chat-video-preview max-w-[200px] block"></video>
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20"><i class="fas fa-play text-white/50 text-2xl"></i></div>
+                        </div>`;
+                } else {
+                    mediaContent = `
+                        <img src="${msg.file_url}" onclick="openMedia('${msg.file_url}', 'image')" class="max-w-[200px] rounded-2xl mb-1 cursor-pointer border border-slate-700 shadow-lg">`;
+                }
+            }
+
+            div.innerHTML = `
+                ${!isMe ? `<img src="${avatar}" onclick='showUserInfo(${JSON.stringify(msg)})' class="w-8 h-8 rounded-full mb-1 cursor-pointer shadow-md">` : ''}
+                <div class="message-bubble">
+                    ${!isMe ? `<span class="text-[10px] text-slate-500 ml-2 mb-1 block">${msg.username}</span>` : ''}
+                    <div class="p-3 rounded-2xl ${isMe ? 'bg-blue-600 rounded-br-none' : 'bg-slate-800 rounded-bl-none'} shadow-sm">
+                        ${mediaContent}
+                        ${msg.text ? `<p class="text-sm leading-relaxed">${msg.text}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+
+            const { data, error } = await supabase_chatroom.from('chatroom_messages').insert([{
+                username: currentUser.username,
+                text: text,
+                gender: currentUser.gender,
+                ig: currentUser.ig,
+                fb: currentUser.fb,
+                x: currentUser.x,
+                yt: currentUser.yt
+            }]).select();
+
+            if (error) {
+                console.error("Message error:", error);
+            }
+        }
+
+        // Improved File Handling for Litterbox
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const limit = file.type.startsWith('video') ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+            if (file.size > limit) return alert("File too large (Video < 10MB, Images < 5MB)");
+
+            const loader = document.getElementById('upload-loading');
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
+
+            let url = null;
+            let attempts = 0;
+            
+            while (attempts < 3) {
+                try {
+                    const formData = new FormData();
+                    formData.append('reqtype', 'fileupload');
+                    formData.append('time', '12h'); 
+                    formData.append('fileToUpload', file);
+
+                    // Note: Litterbox often requires a proxy if used in a strict browser environment.
+                    // If this fails due to CORS, you'd usually use a proxy like 'https://cors-anywhere.herokuapp.com/'
+                    const response = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        url = await response.text();
+                        if (url && url.includes('http')) break;
+                    }
+                } catch (err) {
+                    console.warn("Upload retry...", attempts + 1);
+                }
+                attempts++;
+            }
+
+            loader.classList.add('hidden');
+            loader.classList.remove('flex');
+            e.target.value = ''; // Reset input
+
+            if (url && url.startsWith('http')) {
+                const cleanUrl = url.trim();
+                await supabase_chatroom.from('chatroom_messages').insert([{
+                    username: currentUser.username,
+                    file_url: cleanUrl,
+                    gender: currentUser.gender,
+                    ig: currentUser.ig,
+                    fb: currentUser.fb,
+                    x: currentUser.x,
+                    yt: currentUser.yt
+                }]);
+            } else {
+                alert("Upload failed after 3 attempts. This is likely a CORS restriction or the server is down.");
+            }
+        });
+
+        // UI Utilities
+        function scrollToBottom() {
+            const cb = document.getElementById('chat-box');
+            cb.scrollTo({ top: cb.scrollHeight, behavior: 'smooth' });
+        }
+
+        function openMedia(url, type) {
+            const modal = document.getElementById('media-modal');
+            const content = document.getElementById('modal-content');
+            const dl = document.getElementById('download-btn');
+
+            content.innerHTML = type === 'video' 
+                ? `<video src="${url}" controls autoplay loop class="max-w-full max-h-[70vh] rounded-lg"></video>`
+                : `<img src="${url}" class="max-w-full max-h-[70vh] rounded-lg shadow-2xl">`;
+            
+            dl.href = url;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('media-modal').classList.add('hidden');
+            document.getElementById('modal-content').innerHTML = '';
+        }
+
+        function showUserInfo(msg) {
+            const modal = document.getElementById('user-info-modal');
+            document.getElementById('info-avatar').src = msg.gender === 'female' ? FEMALE_AVATAR : MALE_AVATAR;
+            document.getElementById('info-username').innerText = msg.username;
+            document.getElementById('info-gender').innerText = msg.gender || 'Not specified';
+            
+            const socials = document.getElementById('info-socials');
+            socials.innerHTML = '';
+            
+            const list = [
+                { id: 'ig', icon: 'fab fa-instagram', color: 'text-pink-500' },
+                { id: 'fb', icon: 'fab fa-facebook', color: 'text-blue-500' },
+                { id: 'x', icon: 'fab fa-x-twitter', color: 'text-white' },
+                { id: 'yt', icon: 'fab fa-youtube', color: 'text-red-500' }
+            ];
+
+            list.forEach(s => {
+                const val = msg[s.id];
+                if (val) {
+                    const link = val.startsWith('http') ? val : `https://www.social.com/${val}`; // Basic fallback
+                    socials.innerHTML += `<a href="${link}" target="_blank" class="text-3xl ${s.color} hover:scale-110 transition-transform"><i class="${s.icon}"></i></a>`;
+                }
+            });
+
+            if (socials.innerHTML === '') socials.innerHTML = '<p class="text-slate-500 text-xs italic">No social links added</p>';
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUserInfo() {
+            document.getElementById('user-info-modal').classList.add('hidden');
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to logout? Your profile will be cleared.")) {
+                localStorage.removeItem('pixovia_user');
+                location.reload();
+            }
+        }
+
+        // Auto-expand textarea
+        const msgInput = document.getElementById('message-input');
+        msgInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.scrollHeight > 150) {
+                this.style.overflowY = 'scroll';
+                this.style.height = '150px';
+            } else {
+                this.style.overflowY = 'hidden';
+            }
+        });
+
+        // Enter to send (Mobile friendly check)
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BhaBhaBa Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        .video-container:hover .controls-overlay {
+            opacity: 1;
+        }
+
+        /* Hide scrollbar for audio list */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Loader animation */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-5xl mx-auto">
+        <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl border border-gray-700 relative group video-container select-none">
+            
+            <!-- Video Element (Visuals Only) -->
+            <video id="mainVideo" class="w-full aspect-video bg-black object-contain" poster="https://via.placeholder.com/1280x720/000000/FFFFFF?text=BhaBhaBa+2025" playsinline>
+                <source src="https://github.com/pixovia/movies-files/releases/download/v2.0.0.1.video/BhaBhaBa_2025_720p_video_only.mkv" type="video/mp4">
+                <source src="https://github.com/pixovia/movies-files/releases/download/v2.0.0.1.video/BhaBhaBa_2025_720p_video_only.mkv" type="video/webm">
+                <!-- Fallback text -->
+                Your browser does not support the video tag.
+                <track id="mainSubtitle" label="English" kind="subtitles" srclang="en" src="https://github.com/pixovia/movies-files/releases/download/v1.0.0.04/BhaBhaBa_2025_eng.vtt" default>
+            </video>
+
+            <!-- Hidden Audio Element (Sound) -->
+            <audio id="mainAudio" preload="auto"></audio>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none z-10 hidden">
+                <div class="loader"></div>
+            </div>
+
+            <!-- Big Play Button (Center) -->
+            <div id="bigPlayBtn" class="absolute inset-0 flex items-center justify-center pointer-events-auto cursor-pointer z-0" onclick="togglePlay()">
+                <div class="bg-black/50 p-6 rounded-full hover:bg-red-600/80 transition-all transform hover:scale-110 backdrop-blur-sm">
+                    <i data-lucide="play" class="w-12 h-12 fill-current"></i>
+                </div>
+            </div>
+
+            <!-- Controls Overlay -->
+            <div class="controls-overlay absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-4 pt-12 transition-opacity duration-300 opacity-0 md:opacity-0 group-hover:opacity-100 z-20 flex flex-col gap-2">
+                
+                <!-- Progress Bar -->
+                <div class="relative w-full h-1.5 group/progress cursor-pointer" id="progressContainer">
+                    <div class="absolute w-full h-full bg-gray-600 rounded-full"></div>
+                    <div id="progressBar" class="absolute h-full bg-red-600 rounded-full w-0"></div>
+                    <div id="bufferedBar" class="absolute h-full bg-gray-400/50 rounded-full w-0 transition-all duration-200"></div>
+                    <!-- Hover Handle -->
+                    <div class="absolute h-4 w-4 bg-red-600 rounded-full top-1/2 -translate-y-1/2 scale-0 group-hover/progress:scale-100 transition-transform shadow-md" id="progressHandle" style="left: 0%"></div>
+                    <input type="range" id="seekSlider" min="0" max="100" value="0" step="0.1" class="absolute w-full h-full opacity-0 cursor-pointer z-30">
+                </div>
+
+                <!-- Control Buttons Row -->
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-4">
+                        <!-- Play/Pause -->
+                        <button onclick="togglePlay()" class="hover:text-red-500 transition-colors">
+                            <i id="playIcon" data-lucide="play" class="w-6 h-6 fill-current"></i>
+                            <i id="pauseIcon" data-lucide="pause" class="w-6 h-6 fill-current hidden"></i>
+                        </button>
+
+                        <!-- Volume -->
+                        <div class="flex items-center gap-2 group/volume">
+                            <button onclick="toggleMute()" class="hover:text-red-500 transition-colors">
+                                <i id="volHigh" data-lucide="volume-2" class="w-6 h-6"></i>
+                                <i id="volMute" data-lucide="volume-x" class="w-6 h-6 hidden"></i>
+                            </button>
+                            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300 h-1 bg-white/30 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full cursor-pointer">
+                        </div>
+
+                        <!-- Time -->
+                        <div class="text-sm font-medium font-mono text-gray-300 select-none">
+                            <span id="currentTime">00:00</span> / <span id="duration">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <!-- Audio Selector -->
+                        <div class="relative">
+                            <button id="audioMenuBtn" class="flex items-center gap-1 hover:text-red-500 text-sm font-bold bg-white/10 px-3 py-1 rounded-md backdrop-blur-sm transition-colors">
+                                <i data-lucide="mic-2" class="w-4 h-4"></i>
+                                <span id="currentAudioLabel">MAL</span>
+                            </button>
+                            <!-- Audio Dropdown -->
+                            <div id="audioMenu" class="absolute bottom-full right-0 mb-2 w-40 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl overflow-hidden hidden transform origin-bottom-right">
+                                <div class="p-1 flex flex-col gap-1" id="audioOptions">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subtitle Toggle -->
+                        <button onclick="toggleSubtitles()" id="subBtn" class="hover:text-red-500 transition-colors relative" title="Toggle Subtitles">
+                            <i data-lucide="subtitles" class="w-6 h-6"></i>
+                            <span id="subIndicator" class="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full"></span>
+                        </button>
+
+                        <!-- Fullscreen -->
+                        <button onclick="toggleFullscreen()" class="hover:text-red-500 transition-colors">
+                            <i id="fsEnter" data-lucide="maximize" class="w-6 h-6"></i>
+                            <i id="fsExit" data-lucide="minimize" class="w-6 h-6 hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center text-gray-400 text-sm">
+            <h1 class="text-xl font-bold text-white mb-1">BhaBhaBa (2025)</h1>
+            <p>Multi-Audio Web Player • Malayalam / Tamil / Kannada</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const audioTracks = {
+            mal: {
+                label: 'Malayalam',
+                short: 'MAL',
+                url: 'https://github.com/pixovia/movies-files/releases/download/v2.0.01.audio/BhaBhaBa_2025_malayalam.aac'
+            },
+            tam: {
+                label: 'Tamil',
+                short: 'TAM',
+                url: 'https://github.com/pixovia/movies-files/releases/download/v2.0.01.audio/BhaBhaBa_2025_tamil.aac'
+            },
+            kan: {
+                label: 'Kannada',
+                short: 'KAN',
+                url: 'https://github.com/pixovia/movies-files/releases/download/v2.0.01.audio/BhaBhaBa_2025_kannada.aac'
+            }
+        };
+
+        // --- Elements ---
+        const video = document.getElementById('mainVideo');
+        const audio = document.getElementById('mainAudio');
+        const container = document.querySelector('.video-container');
+        
+        // UI Elements
+        const playBtn = document.getElementById('playIcon');
+        const pauseBtn = document.getElementById('pauseIcon');
+        const bigPlayBtn = document.getElementById('bigPlayBtn');
+        const playIconBig = bigPlayBtn.querySelector('i');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const progressBar = document.getElementById('progressBar');
+        const bufferedBar = document.getElementById('bufferedBar');
+        const progressHandle = document.getElementById('progressHandle');
+        const seekSlider = document.getElementById('seekSlider');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const audioMenuBtn = document.getElementById('audioMenuBtn');
+        const audioMenu = document.getElementById('audioMenu');
+        const audioOptions = document.getElementById('audioOptions');
+        const currentAudioLabel = document.getElementById('currentAudioLabel');
+        const subBtn = document.getElementById('subBtn');
+        const subIndicator = document.getElementById('subIndicator');
+
+        // --- State ---
+        let currentAudioKey = 'mal';
+        let isSyncing = false;
+        let isSeeking = false;
+        let syncInterval;
+
+        // --- Initialization ---
+        lucide.createIcons();
+        
+        // Setup initial audio
+        function initAudio(key) {
+            const wasPlaying = !video.paused;
+            const currentTime = video.currentTime;
+            
+            currentAudioKey = key;
+            audio.src = audioTracks[key].url;
+            audio.currentTime = currentTime;
+            
+            currentAudioLabel.textContent = audioTracks[key].short;
+            
+            if (wasPlaying) {
+                video.play(); // This triggers audio.play() via event listener
+            }
+
+            renderAudioMenu();
+        }
+
+        function renderAudioMenu() {
+            audioOptions.innerHTML = '';
+            Object.keys(audioTracks).forEach(key => {
+                const track = audioTracks[key];
+                const btn = document.createElement('button');
+                const isActive = key === currentAudioKey;
+                btn.className = `w-full text-left px-3 py-2 text-sm rounded transition-colors ${isActive ? 'bg-red-600 text-white' : 'hover:bg-white/10 text-gray-300'}`;
+                btn.textContent = track.label;
+                btn.onclick = () => {
+                    initAudio(key);
+                    audioMenu.classList.add('hidden');
+                };
+                audioOptions.appendChild(btn);
+            });
+        }
+
+        // Initialize with Malayalam
+        initAudio('mal');
+        video.muted = true; // Essential: Mute video so we only hear the separate audio track
+
+        // --- Synchronization Logic ---
+
+        // 1. Play/Pause Sync
+        video.addEventListener('play', () => {
+            audio.play().catch(e => console.log("Audio play failed (interaction needed)", e));
+            updatePlayUI(true);
+            startSyncLoop();
+        });
+
+        video.addEventListener('pause', () => {
+            audio.pause();
+            updatePlayUI(false);
+            stopSyncLoop();
+        });
+
+        video.addEventListener('waiting', () => {
+            loadingSpinner.classList.remove('hidden');
+            bigPlayBtn.classList.add('hidden');
+            audio.pause(); // Pause audio if video buffers
+        });
+
+        video.addEventListener('playing', () => {
+            loadingSpinner.classList.add('hidden');
+            audio.play();
+        });
+
+        // 2. Seek Sync
+        seekSlider.addEventListener('input', (e) => {
+            const time = (video.duration / 100) * e.target.value;
+            video.currentTime = time;
+            audio.currentTime = time;
+            updateProgressUI(time, video.duration);
+        });
+
+        seekSlider.addEventListener('mousedown', () => { isSeeking = true; });
+        seekSlider.addEventListener('mouseup', () => { isSeeking = false; });
+        
+        // Touch events for seeking
+        seekSlider.addEventListener('touchstart', () => { isSeeking = true; });
+        seekSlider.addEventListener('touchend', () => { isSeeking = false; });
+
+        // 3. Drift Correction (The Heart of the Sync)
+        function startSyncLoop() {
+            clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                if (video.paused || isSeeking) return;
+
+                const diff = Math.abs(video.currentTime - audio.currentTime);
+                
+                // If drift is > 0.3s, snap audio to video
+                if (diff > 0.3) {
+                    console.log(`Syncing: Video ${video.currentTime} vs Audio ${audio.currentTime}`);
+                    audio.currentTime = video.currentTime;
+                }
+                
+                // If video ends, ensure audio stops
+                if (video.ended) {
+                    audio.pause();
+                    updatePlayUI(false);
+                    stopSyncLoop();
+                }
+            }, 500);
+        }
+
+        function stopSyncLoop() {
+            clearInterval(syncInterval);
+        }
+
+        // --- UI Logic ---
+
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+
+        function updatePlayUI(isPlaying) {
+            if (isPlaying) {
+                playBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                bigPlayBtn.classList.add('hidden'); // Hide big play button when playing
+            } else {
+                playBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                // Only show big play button if not buffering
+                if (loadingSpinner.classList.contains('hidden')) {
+                    bigPlayBtn.classList.remove('hidden');
+                    // Change icon to pause if we want, but usually big btn is Play
+                }
+            }
+        }
+
+        // Time Update & Progress
+        video.addEventListener('timeupdate', () => {
+            if (!isSeeking) {
+                updateProgressUI(video.currentTime, video.duration);
+            }
+        });
+
+        function updateProgressUI(current, total) {
+            if (!total) return;
+            const percent = (current / total) * 100;
+            progressBar.style.width = `${percent}%`;
+            progressHandle.style.left = `${percent}%`;
+            seekSlider.value = percent;
+            
+            currentTimeEl.textContent = formatTime(current);
+            durationEl.textContent = formatTime(total);
+
+            // Buffer bar
+            if (video.buffered.length > 0) {
+                const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                const bufferedPercent = (bufferedEnd / total) * 100;
+                bufferedBar.style.width = `${bufferedPercent}%`;
+            }
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Volume
+        volumeSlider.addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+            // Update icons based on volume
+            if(audio.volume === 0) {
+                document.getElementById('volHigh').classList.add('hidden');
+                document.getElementById('volMute').classList.remove('hidden');
+            } else {
+                document.getElementById('volHigh').classList.remove('hidden');
+                document.getElementById('volMute').classList.add('hidden');
+            }
+        });
+
+        function toggleMute() {
+            if (audio.volume > 0) {
+                audio.dataset.prevVolume = audio.volume;
+                audio.volume = 0;
+                volumeSlider.value = 0;
+                document.getElementById('volHigh').classList.add('hidden');
+                document.getElementById('volMute').classList.remove('hidden');
+            } else {
+                audio.volume = audio.dataset.prevVolume || 1;
+                volumeSlider.value = audio.volume;
+                document.getElementById('volHigh').classList.remove('hidden');
+                document.getElementById('volMute').classList.add('hidden');
+            }
+        }
+
+        // Subtitles
+        function toggleSubtitles() {
+            const track = video.textTracks[0];
+            if (track.mode === 'showing') {
+                track.mode = 'hidden';
+                subIndicator.classList.add('bg-gray-600');
+                subIndicator.classList.remove('bg-red-600');
+            } else {
+                track.mode = 'showing';
+                subIndicator.classList.remove('bg-gray-600');
+                subIndicator.classList.add('bg-red-600');
+            }
+        }
+
+        // Audio Menu Toggle
+        audioMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            audioMenu.classList.toggle('hidden');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!audioMenuBtn.contains(e.target) && !audioMenu.contains(e.target)) {
+                audioMenu.classList.add('hidden');
+            }
+        });
+
+        // Fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        document.addEventListener('fullscreenchange', () => {
+            const fsEnter = document.getElementById('fsEnter');
+            const fsExit = document.getElementById('fsExit');
+            if (document.fullscreenElement) {
+                fsEnter.classList.add('hidden');
+                fsExit.classList.remove('hidden');
+            } else {
+                fsEnter.classList.remove('hidden');
+                fsExit.classList.add('hidden');
+            }
+        });
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
+            }
+            if (e.code === 'ArrowRight') {
+                video.currentTime += 5;
+                audio.currentTime += 5;
+            }
+            if (e.code === 'ArrowLeft') {
+                video.currentTime -= 5;
+                audio.currentTime -= 5;
+            }
+        });
+
+        // Hide Controls after inactivity
+        let timeout;
+        container.addEventListener('mousemove', () => {
+            container.querySelector('.controls-overlay').style.opacity = '1';
+            container.style.cursor = 'default';
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if(!video.paused) {
+                    container.querySelector('.controls-overlay').style.opacity = '0';
+                    container.style.cursor = 'none';
+                }
+            }, 3000);
+        });
+
+    </script>
+</body>
+</html>

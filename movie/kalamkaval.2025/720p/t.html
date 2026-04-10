@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Cinema Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .player-container:hover .controls-overlay {
+            opacity: 1;
+        }
+        .controls-overlay {
+            transition: opacity 0.3s ease;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+        }
+        .slider {
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        video::cue {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 1.1rem;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #ef4444;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="player-wrapper" class="relative group w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10">
+        
+        <!-- Loading State -->
+        <div id="loader" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
+            <div class="loading-spinner mb-4"></div>
+            <p class="text-sm font-medium text-gray-400">Syncing Media Streams...</p>
+        </div>
+
+        <!-- Video Element -->
+        <video id="main-video" class="w-full h-full object-contain" playsinline>
+            <source src="https://github.com/pixovia/movies-files/releases/download/v2.0.0.1.video/Kalamkaval_2025_720p_video_only.mkv" type="video/x-matroska">
+            <track id="main-track" label="English" kind="subtitles" srclang="en" src="https://github.com/pixovia/movies-files/releases/download/v1.0.0.04/Kalamkaval_2025_english.vtt" default>
+        </video>
+
+        <!-- Audio Element (Hidden Sync) -->
+        <audio id="main-audio" preload="auto">
+            <source src="https://github.com/pixovia/movies-files/releases/download/v2.0.01.audio/Kalamkaval_2025_malayalam_main.aac" type="audio/aac">
+        </audio>
+
+        <!-- Overlay Controls -->
+        <div class="controls-overlay absolute inset-0 opacity-0 flex flex-col justify-end p-4 lg:p-6 space-y-4">
+            
+            <!-- Progress Bar -->
+            <div class="relative w-full group/progress cursor-pointer">
+                <input type="range" id="progress-bar" value="0" min="0" max="100" class="slider w-full cursor-pointer accent-red-500">
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <!-- Play/Pause -->
+                    <button id="play-btn" class="hover:scale-110 transition-transform">
+                        <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                    </button>
+
+                    <!-- Volume -->
+                    <div class="flex items-center space-x-2 group/volume">
+                        <button id="mute-btn">
+                            <i data-lucide="volume-2" class="w-6 h-6"></i>
+                        </button>
+                        <input type="range" id="volume-slider" value="1" min="0" max="1" step="0.1" class="slider w-0 group-hover/volume:w-20 transition-all duration-300 opacity-0 group-hover/volume:opacity-100 overflow-hidden">
+                    </div>
+
+                    <!-- Time -->
+                    <div class="text-xs font-mono text-gray-300">
+                        <span id="current-time">0:00</span> / <span id="duration-time">0:00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- Speed -->
+                    <select id="speed-control" class="bg-transparent text-xs border border-white/20 rounded px-1 outline-none">
+                        <option value="0.5" class="bg-zinc-900">0.5x</option>
+                        <option value="1" class="bg-zinc-900" selected>1.0x</option>
+                        <option value="1.5" class="bg-zinc-900">1.5x</option>
+                        <option value="2" class="bg-zinc-900">2.0x</option>
+                    </select>
+
+                    <!-- Subtitles Toggle -->
+                    <button id="cc-btn" class="text-red-500">
+                        <i data-lucide="subtitles" class="w-6 h-6"></i>
+                    </button>
+
+                    <!-- PiP -->
+                    <button id="pip-btn" class="hidden md:block">
+                        <i data-lucide="pip" class="w-5 h-5"></i>
+                    </button>
+
+                    <!-- Fullscreen -->
+                    <button id="fullscreen-btn">
+                        <i data-lucide="maximize" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Play Notification -->
+        <div id="center-play-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+             <div class="bg-black/50 p-6 rounded-full">
+                 <i data-lucide="play" class="w-12 h-12 text-white fill-current"></i>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('main-video');
+        const audio = document.getElementById('main-audio');
+        const loader = document.getElementById('loader');
+        const playBtn = document.getElementById('play-btn');
+        const muteBtn = document.getElementById('mute-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationTimeEl = document.getElementById('duration-time');
+        const speedControl = document.getElementById('speed-control');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const pipBtn = document.getElementById('pip-btn');
+        const ccBtn = document.getElementById('cc-btn');
+        const playerWrapper = document.getElementById('player-wrapper');
+
+        // Initial Load State
+        video.onloadedmetadata = () => {
+            loader.style.display = 'none';
+            durationTimeEl.innerText = formatTime(video.duration);
+        };
+
+        // Sync Logic
+        function syncMedia() {
+            if (Math.abs(video.currentTime - audio.currentTime) > 0.1) {
+                audio.currentTime = video.currentTime;
+            }
+        }
+
+        video.addEventListener('play', () => {
+            audio.play();
+            playBtn.innerHTML = '<i data-lucide="pause" class="w-6 h-6 fill-current"></i>';
+            lucide.createIcons();
+        });
+
+        video.addEventListener('pause', () => {
+            audio.pause();
+            playBtn.innerHTML = '<i data-lucide="play" class="w-6 h-6 fill-current"></i>';
+            lucide.createIcons();
+        });
+
+        video.addEventListener('seeking', syncMedia);
+        video.addEventListener('ratechange', () => {
+            audio.playbackRate = video.playbackRate;
+        });
+
+        // Controls
+        playBtn.addEventListener('click', () => {
+            if (video.paused) video.play();
+            else video.pause();
+        });
+
+        // Click on video to toggle
+        video.addEventListener('click', () => {
+            if (video.paused) video.play();
+            else video.pause();
+        });
+
+        // Progress Bar
+        video.addEventListener('timeupdate', () => {
+            const percent = (video.currentTime / video.duration) * 100;
+            progressBar.value = percent;
+            currentTimeEl.innerText = formatTime(video.currentTime);
+            syncMedia();
+        });
+
+        progressBar.addEventListener('input', () => {
+            const time = (progressBar.value / 100) * video.duration;
+            video.currentTime = time;
+            audio.currentTime = time;
+        });
+
+        // Volume
+        volumeSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            audio.volume = val;
+            video.volume = 0; // Keep video silent as audio comes from external file
+            if (val == 0) muteBtn.innerHTML = '<i data-lucide="volume-x" class="w-6 h-6"></i>';
+            else muteBtn.innerHTML = '<i data-lucide="volume-2" class="w-6 h-6"></i>';
+            lucide.createIcons();
+        });
+
+        // Fullscreen
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                playerWrapper.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Speed
+        speedControl.addEventListener('change', (e) => {
+            video.playbackRate = parseFloat(e.target.value);
+            audio.playbackRate = parseFloat(e.target.value);
+        });
+
+        // PiP
+        pipBtn.addEventListener('click', async () => {
+            try {
+                if (video !== document.pictureInPictureElement) {
+                    await video.requestPictureInPicture();
+                } else {
+                    await document.exitPictureInPicture();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        // Captions
+        ccBtn.addEventListener('click', () => {
+            const track = video.textTracks[0];
+            if (track.mode === 'showing') {
+                track.mode = 'hidden';
+                ccBtn.classList.remove('text-red-500');
+                ccBtn.classList.add('text-gray-400');
+            } else {
+                track.mode = 'showing';
+                ccBtn.classList.add('text-red-500');
+                ccBtn.classList.remove('text-gray-400');
+            }
+        });
+
+        // Utils
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return h > 0 
+                ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+                : `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                playBtn.click();
+            }
+            if (e.code === 'ArrowRight') video.currentTime += 5;
+            if (e.code === 'ArrowLeft') video.currentTime -= 5;
+            if (e.code === 'KeyF') fullscreenBtn.click();
+            if (e.code === 'KeyM') muteBtn.click();
+        });
+    </script>
+</body>
+</html>

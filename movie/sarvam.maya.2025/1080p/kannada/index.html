@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <title> Sarvam Maya Kannada | Pixovia Movie Player</title>
+  <meta name="description" content="Pixovia Movie Player - Advanced video player with multi-part support and mobile optimization.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <style>
+    /* UI remains identical to your design */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      color: white;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    
+    .header {
+      padding: 1rem 2rem;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, #00f5ff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .back-btn {
+      background: linear-gradient(45deg, #00f5ff, #ff00ff);
+      border: none;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,245,255,0.4);
+    }
+    
+    .yt-video-container {
+      max-width: 1280px;
+      margin: 20px auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .yt-video-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+    }
+    
+    .yt-video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+    
+    .yt-video::-webkit-media-controls {
+      display: none !important;
+    }
+    
+    .custom-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      padding: 20px 16px 16px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 20;
+    }
+    
+    .custom-controls.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .yt-video-wrapper:hover .custom-controls {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .progress-container {
+      margin-bottom: 12px;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #00f5ff;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s;
+    }
+    
+    /* Marker for the split point */
+    .part-marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: rgba(255,255,255,0.5);
+      z-index: 5;
+    }
+
+    .control-buttons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .control-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .control-btn:hover { background: rgba(255,255,255,0.1); }
+    
+    .volume-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .volume-slider {
+      width: 60px;
+      height: 4px;
+    }
+    
+    .center-play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      border: none;
+      color: white;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      font-size: 32px;
+      cursor: pointer;
+      display: block;
+      z-index: 10;
+    }
+    
+    .yt-info {
+      padding: 16px 0;
+    }
+    
+    .yt-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .yt-meta {
+      color: #aaa;
+      font-size: 14px;
+    }
+    
+    .error {
+      background: #ff4444;
+      color: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      margin: 2rem;
+      text-align: center;
+    }
+
+    /* Loading Overlay */
+    #loadingOverlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+    }
+
+    @media screen and (max-width: 768px) {
+      body {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      .yt-video-container { padding: 10px; }
+      .custom-controls {
+        padding: 15px 12px 12px;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+      .control-buttons { gap: 8px; }
+      .control-btn {
+        font-size: 16px;
+        padding: 10px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .volume-container { display: none; }
+      .progress-bar { height: 6px; margin-bottom: 15px; }
+      .center-play-btn { width: 60px; height: 60px; font-size: 24px; }
+      .yt-title { font-size: 18px; line-height: 1.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Pixovia Movie Player</div>
+    <button class="back-btn" onclick="goBack()">← Back to Home</button>
+  </div>
+
+  <div id="error-message" class="error" style="display: none;">
+    Failed to load video parts. Please check your connection.
+  </div>
+
+  <div class="yt-video-container" id="videoContainer">
+    <div class="yt-video-wrapper">
+      <video id="ytVideo" class="yt-video" playsinline disablePictureInPicture></video>
+      <div id="loadingOverlay"><span>Loading...</span></div>
+      <button id="centerPlayBtn" class="center-play-btn" onclick="togglePlayPause()">▶</button>
+      
+      <div class="custom-controls" id="customControls">
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar" onclick="seekVideo(event)">
+            <div class="progress-fill" id="progressFill"></div>
+            <div id="partMarker" class="part-marker" style="display:none"></div>
+          </div>
+        </div>
+        <div class="control-buttons">
+          <button class="control-btn" id="playPauseBtn" onclick="togglePlayPause()">▶</button>
+          <div class="volume-container">
+            <button class="control-btn" id="volumeBtn" onclick="toggleMute()">🔊</button>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" oninput="setVolume(this.value)">
+          </div>
+          <span id="timeDisplay" style="font-size:14px;color:#ccc;">0:00 / 0:00</span>
+          <div style="flex:1;"></div>
+          <button class="control-btn" id="fsBtn" onclick="toggleFullscreen()">⛶</button>
+        </div>
+      </div>
+    </div>
+    <div class="yt-info">
+      <h1 class="yt-title" id="ytTitle">Sarvam Maya (Kannada) HQ</h1>
+        <div class="yt-meta" id="ytMeta">Pixovia Premium Stream • 1080p   <br> Malyalam 720p <a href="https://pixovia.free.nf/movie/sarvam.maya.2025/720p/malayalam/">click here</a> <br> Tamil Version <a href="https://pixovia.free.nf/movie/sarvam.maya.2025/1080p/tamil/" >click here</a> <br> Malayalam version <a  href="https://pixovia.free.nf/movie/sarvam.maya.2025/1080p/malayalam/">click here</a > </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration for Two Parts
+    const videoParts = [
+      "https://github.com/movihosteei/movie-files-1/releases/download/v1.kan.0.1/sarvam_maya_kannada_1080p_part1.mp4",
+      "https://github.com/movihosteei/movie-files-1/releases/download/v1.kan.0.1/sarvam_maya_kannada_1080p_part2.mp4"
+    ];
+
+    let currentPartIndex = 0;
+    let partDurations = [0, 0];
+    let totalDuration = 0;
+    const video = document.getElementById('ytVideo');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const centerPlayBtn = document.getElementById('centerPlayBtn');
+    const progressFill = document.getElementById('progressFill');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const partMarker = document.getElementById('partMarker');
+
+    function goBack() { window.location.href = '../'; }
+
+    // Initialize: Load durations of both parts to treat them as one
+    async function initPlayer() {
+        try {
+            loadingOverlay.style.display = 'flex';
+            
+            // Get duration for Part 1
+            partDurations[0] = await getDuration(videoParts[0]);
+            // Get duration for Part 2
+            partDurations[1] = await getDuration(videoParts[1]);
+            
+            totalDuration = partDurations[0] + partDurations[1];
+            
+            // Set marker position on progress bar
+            const splitPoint = (partDurations[0] / totalDuration) * 100;
+            partMarker.style.left = splitPoint + '%';
+            partMarker.style.display = 'block';
+
+            // Start with Part 1
+            loadPart(0);
+            loadingOverlay.style.display = 'none';
+        } catch (err) {
+            document.getElementById('error-message').style.display = 'block';
+            console.error("Initialization error:", err);
+        }
+    }
+
+    function getDuration(url) {
+        return new Promise((resolve) => {
+            const tempVideo = document.createElement('video');
+            tempVideo.src = url;
+            tempVideo.addEventListener('loadedmetadata', () => {
+                resolve(tempVideo.duration);
+            });
+            tempVideo.addEventListener('error', () => resolve(0));
+        });
+    }
+
+    function loadPart(index, seekToTime = 0) {
+        currentPartIndex = index;
+        video.src = videoParts[index];
+        video.load();
+        video.currentTime = seekToTime;
+        if (index > 0 || seekToTime > 0) video.play();
+    }
+
+    function togglePlayPause() {
+        if (video.paused) video.play();
+        else video.pause();
+    }
+
+    function seekVideo(event) {
+        const rect = document.getElementById('progressBar').getBoundingClientRect();
+        const pos = (event.clientX - rect.left) / rect.width;
+        const targetGlobalTime = pos * totalDuration;
+
+        if (targetGlobalTime < partDurations[0]) {
+            // Seek within Part 1
+            if (currentPartIndex !== 0) {
+                loadPart(0, targetGlobalTime);
+            } else {
+                video.currentTime = targetGlobalTime;
+            }
+        } else {
+            // Seek within Part 2
+            const part2Time = targetGlobalTime - partDurations[0];
+            if (currentPartIndex !== 1) {
+                loadPart(1, part2Time);
+            } else {
+                video.currentTime = part2Time;
+            }
+        }
+    }
+
+    function updateUI() {
+        const globalCurrentTime = (currentPartIndex === 0) 
+            ? video.currentTime 
+            : partDurations[0] + video.currentTime;
+        
+        const progress = (globalCurrentTime / totalDuration) * 100;
+        progressFill.style.width = progress + '%';
+        
+        timeDisplay.textContent = `${formatTime(globalCurrentTime)} / ${formatTime(totalDuration)}`;
+    }
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Auto-switch logic
+    video.addEventListener('ended', () => {
+        if (currentPartIndex === 0) {
+            loadPart(1, 0);
+        }
+    });
+
+    video.addEventListener('timeupdate', updateUI);
+    video.addEventListener('play', () => {
+        playPauseBtn.textContent = '⏸';
+        centerPlayBtn.style.display = 'none';
+    });
+    video.addEventListener('pause', () => {
+        playPauseBtn.textContent = '▶';
+        centerPlayBtn.style.display = 'block';
+    });
+
+    // Volume logic
+    function setVolume(val) { video.volume = val / 100; updateVolumeIcon(); }
+    function toggleMute() { video.muted = !video.muted; updateVolumeIcon(); }
+    function updateVolumeIcon() {
+        const btn = document.getElementById('volumeBtn');
+        btn.textContent = (video.muted || video.volume === 0) ? '🔇' : (video.volume < 0.5 ? '🔉' : '🔊');
+    }
+
+    // Fullscreen & Orientation Lock
+    async function toggleFullscreen() {
+        const container = document.querySelector('.yt-video-wrapper');
+        if (!document.fullscreenElement) {
+            try {
+                if (container.requestFullscreen) await container.requestFullscreen();
+                else if (container.webkitRequestFullscreen) await container.webkitRequestFullscreen();
+                
+                // Force Landscape on Mobile
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock not supported"));
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        }
+    }
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') { e.preventDefault(); togglePlayPause(); }
+        if (e.code === 'KeyF') toggleFullscreen();
+        if (e.code === 'ArrowRight') video.currentTime += 10;
+        if (e.code === 'ArrowLeft') video.currentTime -= 10;
+    });
+
+    window.onload = initPlayer;
+  </script>
+</body>
+</html>

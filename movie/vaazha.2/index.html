@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vaazha 2 Theator Print</title>
+
+<style>
+body{
+#startPopup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.85);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.popupBox{
+background:#020617;
+padding:30px;
+border-radius:12px;
+text-align:center;
+max-width:400px;
+}
+
+.popupBox button{
+margin-top:15px;
+padding:10px 20px;
+background:#2563eb;
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+    
+font-family:Arial, Helvetica, sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+.player{
+position:relative;
+padding-bottom:56.25%;
+height:0;
+overflow:hidden;
+border-radius:12px;
+}
+
+.player iframe{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+border:0;
+}
+
+.playlist{
+margin-top:20px;
+background:#020617;
+padding:15px;
+border-radius:12px;
+}
+
+.video-item{
+padding:10px;
+border-bottom:1px solid #1e293b;
+cursor:pointer;
+}
+
+.video-item:hover{
+background:#1e293b;
+}
+
+.active{
+background:#2563eb;
+}
+
+h1{
+margin-bottom:15px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Continuous Video Player</h1>
+
+<div class="player">
+<iframe id="player"
+src="https://www.youtube.com/embed/VIDEO_ID?enablejsapi=1"
+allow="autoplay; encrypted-media"
+allowfullscreen>
+</iframe>
+</div>
+
+<div class="playlist" id="playlist"></div>
+
+</div>
+<div id="startPopup">
+<div class="popupBox">
+<h2>Vaazha 2 Theator Print</h2>
+<p>This video is split into multiple parts.<br>
+It will play automatically like one full video.<br>
+Click Part 1 to start</p>
+<button onclick="startPlayback()">Start Watching</button>
+</div>
+</div>
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+
+// ADD YOUR VIDEOS HERE
+const videos = [
+{
+ title: "Part 1",
+ id: "vkOgrhP3Sus"
+},
+{
+ title: "Part 2",
+ id: "vw0RIEldnSI"
+},
+{
+ title: "Part 3",
+ id: "_iAxCEfK2Bo"
+},
+{
+ title: "Part 4",
+ id: "FQBycS8GHUM"
+},
+{
+ title: "Part 5",
+ id: "u9dvYvDW8qI"
+},
+{
+ title: "Part 6",
+ id: "jtzFjDL0EJo"
+},
+{
+ title: "Part 7",
+ id: "AMetVDBSdbk"
+},
+{
+ title: "Part 8",
+ id: "LJPE5vnn0VY"
+},
+{
+ title: "Part 9",
+ id: "ajgMW-KoSNI"
+},
+{
+ title: "Part 10",
+ id: "ZbsZKazqc3U"
+},
+{
+ title: "Part 11",
+ id: "aPF7iFvjdZ0"
+}
+];
+
+let player;
+let current = 0;
+
+function onYouTubeIframeAPIReady(){
+player = new YT.Player('player',{
+ videoId: videos[0].id,
+ playerVars:{
+  autoplay:1,
+  modestbranding:1,
+  rel:0
+ },
+ events:{
+  'onStateChange': onPlayerStateChange
+ }
+});
+}
+
+function onPlayerStateChange(event){
+ if(event.data === 0){
+  nextVideo();
+ }
+}
+    
+function startPlayback(){
+document.getElementById("startPopup").style.display="none";
+}
+    
+function nextVideo(){
+ current++;
+ if(current >= videos.length) return;
+ player.loadVideoById(videos[current].id);
+ highlight();
+}
+
+function loadVideo(index){
+ current = index;
+ player.loadVideoById(videos[index].id);
+ highlight();
+}
+
+function highlight(){
+ document.querySelectorAll('.video-item').forEach((el,i)=>{
+  el.classList.remove('active');
+  if(i===current) el.classList.add('active');
+ });
+}
+
+// Build Playlist
+const playlist = document.getElementById('playlist');
+
+videos.forEach((video,index)=>{
+ const div = document.createElement('div');
+ div.className = 'video-item';
+ div.innerText = video.title;
+ div.onclick = ()=> loadVideo(index);
+ playlist.appendChild(div);
+});
+
+</script>
+
+</body>
+</html>
