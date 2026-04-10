@@ -1,0 +1,555 @@
+@font-face {
+    font-family: "cpufont";
+    src: url(../cpufixed.93b4de94ef6ac70b7bde.woff);
+    font-display: swap
+}
+
+@font-face {
+    font-family: "lcdfont";
+    src: url(../lcd.530954c67f6505131950.woff) format("woff");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap
+}
+
+@font-face {
+    font-family: "blippo";
+    src: url(../blippo.9605964e0bee95e333ca.woff2) format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap
+}
+
+span.status {
+    background-color: #000
+}
+
+.css-label {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAeCAYAAADzXER0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSoghodkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89+bN/rXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJHAAEAizZCFz/SMBAPh+PDwrIsAHvgABeNMLCADATZvAMByH/w/qQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGAnf+bTAICd+Jl7AQBblCEVAaCRACATZYhEAGg7AKzPVopFAFgwABRmS8Q5ANgtADBJV2ZIALC3AMDOEAuyAAgMADBRiIUpAAR7AGDIIyN4AISZABRG8lc88SuuEOcqAAB4mbI8uSQ5RYFbCC1xB1dXLh4ozkkXKxQ2YQJhmkAuwnmZGTKBNA/g88wAAKCRFRHgg/P9eM4Ors7ONo62Dl8t6r8G/yJiYuP+5c+rcEAAAOF0ftH+LC+zGoA7BoBt/qIl7gRoXgugdfeLZrIPQLUAoOnaV/Nw+H48PEWhkLnZ2eXk5NhKxEJbYcpXff5nwl/AV/1s+X48/Pf14L7iJIEyXYFHBPjgwsz0TKUcz5IJhGLc5o9H/LcL//wd0yLESWK5WCoU41EScY5EmozzMqUiiUKSKcUl0v9k4t8s+wM+3zUAsGo+AXuRLahdYwP2SycQWHTA4vcAAPK7b8HUKAgDgGiD4c93/+8//UegJQCAZkmScQAAXkQkLlTKsz/HCAAARKCBKrBBG/TBGCzABhzBBdzBC/xgNoRCJMTCQhBCCmSAHHJgKayCQiiGzbAdKmAv1EAdNMBRaIaTcA4uwlW4Dj1wD/phCJ7BKLyBCQRByAgTYSHaiAFiilgjjggXmYX4IcFIBBKLJCDJiBRRIkuRNUgxUopUIFVIHfI9cgI5h1xGupE7yAAygvyGvEcxlIGyUT3UDLVDuag3GoRGogvQZHQxmo8WoJvQcrQaPYw2oefQq2gP2o8+Q8cwwOgYBzPEbDAuxsNCsTgsCZNjy7EirAyrxhqwVqwDu4n1Y8+xdwQSgUXACTYEd0IgYR5BSFhMWE7YSKggHCQ0EdoJNwkDhFHCJyKTqEu0JroR+cQYYjIxh1hILCPWEo8TLxB7iEPENyQSiUMyJ7mQAkmxpFTSEtJG0m5SI+ksqZs0SBojk8naZGuyBzmULCAryIXkneTD5DPkG+Qh8lsKnWJAcaT4U+IoUspqShnlEOU05QZlmDJBVaOaUt2ooVQRNY9aQq2htlKvUYeoEzR1mjnNgxZJS6WtopXTGmgXaPdpr+h0uhHdlR5Ol9BX0svpR+iX6AP0dwwNhhWDx4hnKBmbGAcYZxl3GK+YTKYZ04sZx1QwNzHrmOeZD5lvVVgqtip8FZHKCpVKlSaVGyovVKmqpqreqgtV81XLVI+pXlN9rkZVM1PjqQnUlqtVqp1Q61MbU2epO6iHqmeob1Q/pH5Z/YkGWcNMw09DpFGgsV/jvMYgC2MZs3gsIWsNq4Z1gTXEJrHN2Xx2KruY/R27iz2qqaE5QzNKM1ezUvOUZj8H45hx+Jx0TgnnKKeX836K3hTvKeIpG6Y0TLkxZVxrqpaXllirSKtRq0frvTau7aedpr1Fu1n7gQ5Bx0onXCdHZ4/OBZ3nU9lT3acKpxZNPTr1ri6qa6UbobtEd79up+6Ynr5egJ5Mb6feeb3n+hx9L/1U/W36p/VHDFgGswwkBtsMzhg8xTVxbzwdL8fb8VFDXcNAQ6VhlWGX4YSRudE8o9VGjUYPjGnGXOMk423GbcajJgYmISZLTepN7ppSTbmmKaY7TDtMx83MzaLN1pk1mz0x1zLnm+eb15vft2BaeFostqi2uGVJsuRaplnutrxuhVo5WaVYVVpds0atna0l1rutu6cRp7lOk06rntZnw7Dxtsm2qbcZsOXYBtuutm22fWFnYhdnt8Wuw+6TvZN9un2N/T0HDYfZDqsdWh1+c7RyFDpWOt6azpzuP33F9JbpL2dYzxDP2DPjthPLKcRpnVOb00dnF2e5c4PziIuJS4LLLpc+Lpsbxt3IveRKdPVxXeF60vWdm7Obwu2o26/uNu5p7ofcn8w0nymeWTNz0MPIQ+BR5dE/C5+VMGvfrH5PQ0+BZ7XnIy9jL5FXrdewt6V3qvdh7xc+9j5yn+M+4zw33jLeWV/MN8C3yLfLT8Nvnl+F30N/I/9k/3r/0QCngCUBZwOJgUGBWwL7+Hp8Ib+OPzrbZfay2e1BjKC5QRVBj4KtguXBrSFoyOyQrSH355jOkc5pDoVQfujW0Adh5mGLw34MJ4WHhVeGP45wiFga0TGXNXfR3ENz30T6RJZE3ptnMU85ry1KNSo+qi5qPNo3ujS6P8YuZlnM1VidWElsSxw5LiquNm5svt/87fOH4p3iC+N7F5gvyF1weaHOwvSFpxapLhIsOpZATIhOOJTwQRAqqBaMJfITdyWOCnnCHcJnIi/RNtGI2ENcKh5O8kgqTXqS7JG8NXkkxTOlLOW5hCepkLxMDUzdmzqeFpp2IG0yPTq9MYOSkZBxQqohTZO2Z+pn5mZ2y6xlhbL+xW6Lty8elQfJa7OQrAVZLQq2QqboVFoo1yoHsmdlV2a/zYnKOZarnivN7cyzytuQN5zvn//tEsIS4ZK2pYZLVy0dWOa9rGo5sjxxedsK4xUFK4ZWBqw8uIq2Km3VT6vtV5eufr0mek1rgV7ByoLBtQFr6wtVCuWFfevc1+1dT1gvWd+1YfqGnRs+FYmKrhTbF5cVf9go3HjlG4dvyr+Z3JS0qavEuWTPZtJm6ebeLZ5bDpaql+aXDm4N2dq0Dd9WtO319kXbL5fNKNu7g7ZDuaO/PLi8ZafJzs07P1SkVPRU+lQ27tLdtWHX+G7R7ht7vPY07NXbW7z3/T7JvttVAVVN1WbVZftJ+7P3P66Jqun4lvttXa1ObXHtxwPSA/0HIw6217nU1R3SPVRSj9Yr60cOxx++/p3vdy0NNg1VjZzG4iNwRHnk6fcJ3/ceDTradox7rOEH0x92HWcdL2pCmvKaRptTmvtbYlu6T8w+0dbq3nr8R9sfD5w0PFl5SvNUyWna6YLTk2fyz4ydlZ19fi753GDborZ752PO32oPb++6EHTh0kX/i+c7vDvOXPK4dPKy2+UTV7hXmq86X23qdOo8/pPTT8e7nLuarrlca7nuer21e2b36RueN87d9L158Rb/1tWeOT3dvfN6b/fF9/XfFt1+cif9zsu72Xcn7q28T7xf9EDtQdlD3YfVP1v+3Njv3H9qwHeg89HcR/cGhYPP/pH1jw9DBY+Zj8uGDYbrnjg+OTniP3L96fynQ89kzyaeF/6i/suuFxYvfvjV69fO0ZjRoZfyl5O/bXyl/erA6xmv28bCxh6+yXgzMV70VvvtwXfcdx3vo98PT+R8IH8o/2j5sfVT0Kf7kxmTk/8EA5jz/GMzLdsAAAAgY0hSTQAAeiUAAICDAAD5/wAAgOkAAHUwAADqYAAAOpgAABdvkl/FRgAAAbpJREFUeNrskz1rVEEUhp+ZOXNzXbKLuXtRrOLHL1CiC7GxCKhFEEVFMEnlbxDFVhBS2gghxm8rsbDwB6RQbLSUSBBFWTFugtlV7kTvztgkIRL3I6kk5IVTHJiHeWfOeVWlUomAy8BFYA+d9QV4BIwLcNVaeyWO40hEtFIKpVRLstlsFp1z15xzRoDROI57rLXKGIPWui0sItoY0+OcGxUgFRFljEFE0Fp39K21VkAqAEoptNar1a30CtzOalt4s9qGNwHXvPchhNA15L0PQE0DD7IsW8rzPHjv6VR5nod6vb4EPBbghnMucs6dBXZ3cfFX4AlwfeXNGeC7db18nq0eyezkEGGxQeHFq41FMj8xxPGxEZLKwMY2zA0c5ND506RikTRpD+flPn7t6wfg966U3nOn8MUSz2fesvD02d+ft7apHztKfmaY0PhBMn6Tn4OHMfv7mX79htLkPaJv861h5T3N3gI2KTN3aQx1YC/u3SzlibvI/ML6sa1titMv2fHhE99HLrBz8AhZtUrh9kPsP8B1MED0uUrf1H0ai8PIzCzx+4+tF2Y5kqUQwuqs7FyN5Nad/ziSfwYAJhHtwSXlZ14AAAAASUVORK5CYII=)
+}
+
+.led-green {
+    margin: 20px auto;
+    width: 12px;
+    height: 12px;
+    background-color: lime;
+    border-radius: 50%;
+    box-shadow: #000 0 -1px 7px 1px,inset #460 0 -1px 9px,#7d0 0 2px 12px;
+    opacity: 0;
+    transition: all 1s ease
+}
+
+.led-red {
+    margin: 20px auto;
+    width: 3px;
+    height: 3px;
+    background-color: red;
+    border-radius: 50%
+}
+
+.tvremotebackground {
+    border-style: solid;
+    border-width: 3px;
+    border-color: #3d3b3b;
+    border-radius: 10px;
+    background-image: linear-gradient(90deg, rgb(125, 125, 125) 0, rgb(63, 56, 56) 49%, rgb(175, 175, 175) 100%);
+    position: absolute;
+    box-shadow: 10px 10px 5px rgba(0,0,0,.5);
+    width: 120px;
+    height: 200px
+}
+
+#tubeglow {
+    position: absolute;
+    left: 102px;
+    top: 66px;
+    width: 622px;
+    height: 358px;
+    z-index: 50;
+    text-align: center;
+    text-indent: .1em
+}
+
+#tvknob {
+    position: absolute;
+    padding: 10px;
+    z-index: 10;
+    left: 481px;
+    top: 470px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#tvled {
+    position: absolute;
+    z-index: 10;
+    left: 443px;
+    top: 464px
+}
+
+#tvledmini {
+    position: absolute;
+    z-index: 10;
+    left: 470px;
+    top: 468px;
+    visibility: hidden
+}
+
+#tvpanel_chdn {
+    position: absolute;
+    z-index: 10;
+    left: 398px;
+    top: 480px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#tvpanel_chup {
+    position: absolute;
+    z-index: 10;
+    left: 418px;
+    top: 480px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#tvpanel_menu {
+    position: absolute;
+    z-index: 10;
+    left: 336px;
+    top: 480px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#tvpanel_voldn {
+    position: absolute;
+    z-index: 10;
+    left: 357px;
+    top: 480px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#tvpanel_volup {
+    position: absolute;
+    z-index: 10;
+    left: 377px;
+    top: 480px;
+    cursor: pointer;
+    opacity: 0
+}
+
+#help {
+    font-family: "cpufont",monospace;
+    position: absolute;
+    z-index: 10;
+    color: aqua;
+    left: 236px;
+    top: 110px;
+    height: 300px;
+    width: 480px;
+    line-height: 20px;
+    text-align: left
+}
+
+#helpback {
+    position: absolute;
+    z-index: 10;
+    left: 220px;
+    top: 100px;
+    width: 390px;
+    height: 290px;
+    background-color: #000;
+    visibility: hidden
+}
+
+#lcdbar {
+    position: absolute;
+    z-index: 10;
+    font-family: "lcdfont";
+    line-height: 20px;
+    font-size: 14px;
+    text-shadow: 4px 4px 10px #add8e6;
+    font-weight: normal;
+    color: #add8e6;
+    left: 48px;
+    top: 562px;
+    width: 744px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden
+}
+
+#sidebar {
+    position: absolute;
+    width: 146px;
+    z-index: 10;
+    left: 972px;
+    top: 20px
+}
+
+.fadable {
+    opacity: 0;
+    transition: opacity .8s ease
+}
+
+#logo {
+    position: absolute;
+    z-index: 10;
+    left: 630px;
+    top: 445px
+}
+
+:root {
+    color-scheme: light only
+}
+
+html {
+    background-color: #000
+}
+
+body {
+    background-color: #000;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    margin: 0;
+    padding: 0
+}
+
+.wrapper {
+    transform-origin: 0 0;
+    opacity: 0;
+    transition: opacity 1s ease-in .1s
+}
+
+#tvfilters {
+    position: absolute;
+    z-index: 10;
+    left: 832px;
+    top: 20px;
+    background-color: #000;
+    visibility: hidden
+}
+
+#tvfilters span {
+    color: lime
+}
+
+input[type=checkbox] {
+    font-family: Arial,sans-serif;
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    width: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    color: gray;
+    font-size: 11px
+}
+
+input[type=checkbox]+label.css-label {
+    font-family: Arial,sans-serif;
+    padding-left: 20px;
+    height: 15px;
+    display: block;
+    line-height: 15px;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    font-size: 15px;
+    cursor: pointer;
+    color: gray;
+    font-size: 11px;
+    margin-bottom: 5px
+}
+
+input[type=checkbox]:checked+label.css-label {
+    font-family: Arial,sans-serif;
+    background-position: 0 -15px;
+    color: lime;
+    font-size: 11px
+}
+
+#remotestatus {
+    position: absolute;
+    z-index: 10;
+    width: 270px;
+    height: 28px;
+    left: 832px;
+    top: 552px;
+    font-family: "blippo",monospace;
+    color: lime;
+    text-align: left;
+    font-size: 14px;
+    line-height: 14px
+}
+
+#tvbuttons {
+    position: absolute;
+    z-index: 10;
+    left: 832px;
+    top: 346px;
+    line-height: 20px;
+    margin-bottom: 0
+}
+
+button.tvremote {
+    font-family: Arial,Helvetica,sans-serif;
+    font-size: 14px;
+    color: #000;
+    width: 100px;
+    height: 18px;
+    padding: 4px 20px;
+    background-color: #707070;
+    outline: none;
+    border-radius: 30px;
+    border: 1px solid #000;
+    box-shadow: 0 1px 3px rgba(0,0,0,.5),inset 0 0 1px hsla(0,0%,100%,.7);
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4),0 1px 0 hsla(0,0%,100%,.3);
+    position: inherit;
+    cursor: pointer;
+    overflow: visible;
+    padding: 0 0
+}
+
+button.tvremotebutton-on {
+    background-color: #999
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    padding-left: 6px;
+    margin: 0
+}
+
+ul li {
+    padding: 3px
+}
+
+#iconsuggest {
+    position: absolute;
+    z-index: 10;
+    left: 918px;
+    top: 512px;
+    cursor: pointer
+}
+
+#iconbsky {
+    position: absolute;
+    z-index: 10;
+    left: 880px;
+    top: 510px;
+    cursor: pointer
+}
+
+#iconreport {
+    position: absolute;
+    z-index: 10;
+    left: 842px;
+    top: 510px;
+    visibility: hidden;
+    cursor: pointer
+}
+
+#myytplayer {
+    position: absolute;
+    z-index: 0;
+    left: 95px;
+    top: 65px;
+    width: 640px;
+    height: 360px;
+    visibility: hidden
+}
+
+#tvbackground {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 20px;
+    border: 0 solid #000
+}
+
+#tvstatic {
+    position: absolute;
+    z-index: 2;
+    left: 95px;
+    top: 67px;
+    opacity: 0;
+    width: 640px;
+    height: 360px;
+    background: repeating-linear-gradient(0deg, black, rgb(48, 46, 46) 4px, black)
+}
+
+#tvstencil {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: 50px
+}
+
+#statusbar {
+    font-family: "blippo",monospace;
+    position: absolute;
+    font-size: 18px;
+    z-index: 10;
+    color: #0b0;
+    left: 97px;
+    top: 22px;
+    height: 30px;
+    width: 658px;
+    line-height: 30px;
+    text-align: center
+}
+
+#channellabel {
+    position: absolute;
+    left: 416px;
+    top: 72px;
+    font-family: "Arial",Courier,monospace;
+    font-size: 18px;
+    font-weight: bold;
+    width: 300px;
+    visibility: visible;
+    color: lime;
+    z-index: 10;
+    opacity: .7;
+    text-shadow: 0 0 10px green;
+    text-align: right justify;
+    direction: rtl
+}
+
+span.chanspan {
+    background-color: #000
+}
+
+.status-red {
+    color: red
+}
+
+#hand {
+    position: absolute;
+    z-index: 100;
+    left: 498px;
+    top: 490px
+}
+
+#yearbar {
+    display: grid;
+    position: absolute;
+    grid-template-columns: repeat(10, 68px);
+    font-family: "blippo",monospace;
+    z-index: 1;
+    left: 84px;
+    top: 531px;
+    visibility: hidden;
+    line-height: 30px;
+    width: undefined
+}
+
+#yearbar .year {
+    cursor: default;
+    filter: drop-shadow(2px 2px 1px rgb(0, 0, 0))
+}
+
+#guide {
+    position: absolute;
+    z-index: 11;
+    left: 766px;
+    top: 528px
+}
+
+#credit {
+    position: absolute;
+    z-index: 10;
+    left: 34px;
+    font-size: small;
+    color: gray;
+    top: 602px;
+    width: 766px;
+    text-align: center
+}
+
+a:link,a:visited,a:hover,a:active {
+    text-decoration: none;
+    color: #bbb
+}
+
+.sideitem {
+    width: 128px;
+    padding-bottom: 10px
+}
+
+.sideitem img {
+    display: block;
+    margin: auto
+}
+
+.action-button {
+    line-height: 25px;
+    height: 41px;
+    min-width: 128px;
+    text-decoration: none;
+    display: inline-flex;
+    color: #fff;
+    border-radius: 5px;
+    border: 1px solid #fff;
+    padding: 7px 11px 7px 2px;
+    letter-spacing: -0.08px;
+    box-shadow: 0 1px 2px rgba(190,190,190,.5);
+    margin: 0 auto;
+    font-family: "Lato",sans-serif;
+    font-size: 12px;
+    box-sizing: border-box;
+    transition: .3s all linear
+}
+
+.action-button:hover,.action-button:active,.action-button:focus {
+    text-decoration: none !important;
+    box-shadow: 0 1px 2px 2px rgba(119,118,118,.5);
+    opacity: .85;
+    color: #fff
+}
+
+.bmc-button img {
+    height: 24px !important;
+    margin: auto;
+    box-shadow: none !important;
+    border: none !important;
+    vertical-align: middle !important
+}
+
+.bmc-button {
+    background-color: #4e688f
+}
+
+#glass {
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1
+}
+
+.notransitions {
+    transition: none !important
+}
+
+.noclicky {
+    pointer-events: none
+}
+
+.tvcurtain {
+    position: absolute !important;
+    z-index: 9 !important;
+    left: 825px !important;
+    top: 0 !important;
+    right: 0 !important;
+    height: 510px !important;
+    background-color: #000 !important
+}

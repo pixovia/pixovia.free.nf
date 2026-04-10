@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixovia TV - Server 2 (TVPass)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #ff3e3e;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background: radial-gradient(circle at top right, #1a1a1a, #050505);
+            color: #efefef;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+        }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+        .bento-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .bento-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+        .active-nav {
+            background: linear-gradient(90deg, var(--accent), transparent);
+            border-left: 3px solid var(--accent);
+            color: white;
+        }
+        #video-frame {
+            aspect-ratio: 16/9;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        .custom-loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid transparent;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="h-16 flex items-center justify-between px-6 glass-panel z-50">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black text-white italic">P</div>
+                <span class="font-bold tracking-widest text-lg">PIXOVIA <span class="text-red-500 text-xs font-normal">TVPASS</span></span>
+            </div>
+        </div>
+
+        <div class="flex-1 max-w-2xl px-8">
+            <div class="relative group">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors"></i>
+                <input type="text" id="search" placeholder="Search TVPass channels..." 
+                       class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-sm text-gray-400">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span id="stat-count">Connecting to TVPass...</span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 glass-panel border-r border-white/5 flex flex-col">
+            <div class="p-6">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Categories</p>
+                <nav id="category-list" class="space-y-1 overflow-y-auto no-scrollbar max-h-[calc(100vh-200px)]"></nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col relative">
+            
+            <!-- Video Player Overlay (Cinema Mode) -->
+            <div id="player-view" class="hidden absolute inset-0 z-40 bg-black/95 flex flex-col p-4 md:p-8 overflow-y-auto no-scrollbar">
+                <div class="max-w-6xl mx-auto w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="closePlayer()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-chevron-left"></i> Exit Cinema
+                        </button>
+                        <div class="flex gap-4">
+                            <button onclick="retryCurrent()" class="text-sm bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full transition-all">
+                                <i class="fas fa-redo-alt mr-2"></i>Refresh Stream
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="video-frame" class="relative group bg-black rounded-3xl overflow-hidden ring-1 ring-white/10">
+                        <video id="main-video" class="w-full h-full" controls autoplay></video>
+                        
+                        <!-- Error State -->
+                        <div id="error-screen" class="hidden absolute inset-0 bg-neutral-900/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6">
+                            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold">Stream Unavailable</h3>
+                            <p class="text-gray-400 mt-2 max-w-md text-sm">TVPass links are community-sourced. This specific stream might be down, regionally blocked, or requiring a different CORS header.</p>
+                            <button onclick="retryCurrent()" class="mt-6 bg-red-600 hover:bg-red-500 text-white px-8 py-2.5 rounded-full font-bold shadow-lg shadow-red-600/20 transition-all">
+                                Try Reconnecting
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-col md:flex-row md:items-end justify-between gap-4 px-2">
+                        <div>
+                            <span id="playing-group" class="text-red-500 text-xs font-bold uppercase tracking-widest">Live TV</span>
+                            <h1 id="playing-name" class="text-3xl font-black mt-1">Channel Name</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar">
+                <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 z-30">
+                    <div class="custom-loader mb-4"></div>
+                    <p class="text-gray-400 animate-pulse">Fetching TVPass Playlist...</p>
+                </div>
+
+                <div id="channel-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    <!-- Cards injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const PROXY = 'https://corsproxy.io/?';
+        const M3U_URL = 'https://tvpass.org/playlist/m3u';
+        
+        let channels = [];
+        let filtered = [];
+        let hls = null;
+        let activeChannel = null;
+
+        const video = document.getElementById('main-video');
+        const grid = document.getElementById('channel-grid');
+        const searchInput = document.getElementById('search');
+
+        async function init() {
+            try {
+                const res = await fetch(PROXY + encodeURIComponent(M3U_URL));
+                if (!res.ok) throw new Error('CORS Proxy failed');
+                
+                const text = await res.text();
+                channels = parse(text);
+                filtered = channels;
+                
+                document.getElementById('stat-count').innerText = `${channels.length.toLocaleString()} Channels Online`;
+                renderSidebar();
+                renderGrid(channels);
+                document.getElementById('loading-overlay').classList.add('hidden');
+            } catch (err) {
+                console.error("Initialization Error:", err);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div class="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-xl max-w-sm">
+                        <i class="fas fa-wifi text-red-500 text-3xl mb-3"></i>
+                        <p class="text-red-500 font-bold">Network Error</p>
+                        <p class="text-gray-500 text-xs mt-1">Unable to fetch tvpass.org playlist. The server might be rate-limiting the proxy.</p>
+                        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-red-600 rounded-lg text-xs font-bold">Retry Now</button>
+                    </div>
+                `;
+            }
+        }
+
+        function parse(data) {
+            const list = [];
+            const lines = data.split('\n');
+            let current = null;
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('#EXTINF:')) {
+                    // TVPass specific parsing logic
+                    const nameParts = line.split(/,(.*)/);
+                    const name = nameParts[1] ? nameParts[1].trim() : 'Unnamed Stream';
+                    
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    const groupMatch = line.match(/group-title="([^"]+)"/);
+                    
+                    current = { 
+                        name, 
+                        logo: logoMatch ? logoMatch[1] : '', 
+                        group: groupMatch ? groupMatch[1] : 'Uncategorized' 
+                    };
+                } else if (line.startsWith('http')) {
+                    if (current) {
+                        current.url = line;
+                        list.push(current);
+                        current = null;
+                    }
+                }
+            }
+            return list;
+        }
+
+        function renderGrid(data) {
+            grid.innerHTML = '';
+            // Render up to 500 channels for performance
+            const displayList = data.slice(0, 500);
+            
+            displayList.forEach(chan => {
+                const card = document.createElement('div');
+                card.className = 'bento-card group glass-panel rounded-2xl p-4 cursor-pointer flex flex-col items-center text-center border border-white/5';
+                card.onclick = () => play(chan);
+                
+                const placeholderLogo = `https://ui-avatars.com/api/?name=${encodeURIComponent(chan.name)}&background=1a1a1a&color=ff3e3e&bold=true`;
+
+                card.innerHTML = `
+                    <div class="relative w-full aspect-video mb-4 bg-black/40 rounded-xl flex items-center justify-center p-2 group-hover:scale-105 transition-transform overflow-hidden">
+                        <img src="${chan.logo || placeholderLogo}" class="max-h-full max-w-full object-contain" 
+                             onerror="this.src='${placeholderLogo}'">
+                        <div class="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-colors flex items-center justify-center">
+                            <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="w-full">
+                        <p class="text-[9px] text-red-500 font-bold uppercase mb-1 truncate tracking-tighter opacity-80">${chan.group}</p>
+                        <h4 class="text-xs font-bold line-clamp-2 h-8 group-hover:text-white transition-colors leading-tight">${chan.name}</h4>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderSidebar() {
+            const groups = ['All Channels', ...new Set(channels.map(c => c.group))].sort();
+            const container = document.getElementById('category-list');
+            container.innerHTML = '';
+            
+            groups.forEach((group, idx) => {
+                const item = document.createElement('div');
+                item.className = `px-4 py-2 rounded-lg text-xs cursor-pointer transition-all hover:bg-white/5 text-gray-400 category-item ${idx===0?'active-nav':''}`;
+                item.innerHTML = `<i class="fas fa-folder-open mr-3 opacity-50 text-[10px]"></i> ${group}`;
+                item.onclick = () => {
+                    document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active-nav'));
+                    item.classList.add('active-nav');
+                    filtered = group === 'All Channels' ? channels : channels.filter(c => c.group === group);
+                    renderGrid(filtered);
+                };
+                container.appendChild(item);
+            });
+        }
+
+        function play(chan) {
+            activeChannel = chan;
+            document.getElementById('player-view').classList.remove('hidden');
+            document.getElementById('error-screen').classList.add('hidden');
+            document.getElementById('playing-name').innerText = chan.name;
+            document.getElementById('playing-group').innerText = chan.group;
+
+            if (hls) hls.destroy();
+
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    xhrSetup: function(xhr) { 
+                        xhr.withCredentials = false; 
+                    },
+                    enableWorker: true,
+                    // TVPass streams can sometimes be unstable, increase retry timeout
+                    manifestLoadingMaxRetry: 4,
+                    manifestLoadingRetryDelay: 1000
+                });
+
+                // Some streams from this source might require the proxy for the manifest itself
+                hls.loadSource(chan.url);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        console.warn("HLS Error:", data.type);
+                        document.getElementById('error-screen').classList.remove('hidden');
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = chan.url;
+            }
+        }
+
+        function closePlayer() {
+            if (hls) hls.destroy();
+            video.pause();
+            video.src = "";
+            document.getElementById('player-view').classList.add('hidden');
+        }
+
+        function retryCurrent() {
+            if (activeChannel) play(activeChannel);
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const results = filtered.filter(c => 
+                c.name.toLowerCase().includes(term) || 
+                c.group.toLowerCase().includes(term)
+            );
+            renderGrid(results);
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>

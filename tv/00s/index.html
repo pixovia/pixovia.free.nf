@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>My 2000's TV!</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="user-scalable=yes"/>
+        <meta name="color-scheme" content="light only"/>
+        <link rel="icon" href="https://00s.myretrotvs.com/favicon.ico"/>
+        <link rel="image_src" type="image/jpeg" href="https://00s.myretrotvs.com/share.jpg"/>
+        <link rel="apple-touch-icon" href="https://00s.myretrotvs.com/img/apple-touch-icon.png"/>
+        <link rel="manifest" href="/tv/00s/manifest.json"/>
+        <meta name="description" content="Go back to the 2000's via this nostalgic TV simulator and relive the original ads, music videos, movie trailers, shows and more!"/>
+        <meta name="author" content="Joey Cato"/>
+        <meta name="keywords" content="2000,2000's,nostalgia,TV,music,commercials,retro,flashback"/>
+        <meta property="og:title" content="My 2000's TV!"/>
+        <meta property="og:locale" content="en_US"/>
+        <meta property="og:type" content="website"/>
+        <meta property="og:image" content="https://00s.myretrotvs.com/share.jpg"/>
+        <meta property="og:url" content=""/>
+        <meta property="og:description" content="Go back to the 2000's via this nostalgic TV simulator and relive the original ads, music videos, movie trailers, shows and more!"/>
+        <style>
+            body {
+                background-color: #000
+            }
+
+            #loader {
+                font-family: blippo,monospace;
+                position: absolute;
+                font-size: 40px;
+                z-index: 12;
+                left: 15%;
+                top: 25%;
+                width: 100%;
+                height: 30px;
+                line-height: 30px;
+                color: #0f0
+            }
+        </style>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-G6EZHHQFLN"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JJ21Q6CQN7"></script>
+        <script>
+            document.addEventListener("touchmove", (function(t) {
+                1 !== t.scale && t.preventDefault()
+            }
+            ), !1);
+            var lastTouchEnd = 0;
+            function gtag() {
+                dataLayer.push(arguments)
+            }
+            document.addEventListener("touchend", (function(t) {
+                var e = (new Date).getTime();
+                e - lastTouchEnd <= 300 && t.preventDefault(),
+                lastTouchEnd = e
+            }
+            ), !1),
+            window.dataLayer = window.dataLayer || [],
+            gtag("js", new Date),
+            gtag("config", "G-G6EZHHQFLN"),
+            gtag("config", "G-JJ21Q6CQN7")
+        </script>
+        <script defer="defer" src="js/main.29dfb75a.js"></script>
+        <link href="css/main.89b258fa.css" rel="stylesheet">
+        <link as="font" crossorigin="anonymous" href="blippo.9605964e0bee95e333ca.woff2" rel="preload">
+        <link as="font" crossorigin="anonymous" href="cpufixed.93b4de94ef6ac70b7bde.woff" rel="preload">
+        <link as="font" crossorigin="anonymous" href="lcd.530954c67f6505131950.woff" rel="preload">
+    </head>
+    <body scroll="no">
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="loader">Loading...</div>
+        <script>
+            var NUM_STEPS = 5
+              , STEP = Math.floor(100 / NUM_STEPS)
+              , loaderTid = 0
+              , loaderCurr = 0
+              , loaderNext = STEP;
+            function setLoader() {
+                document.getElementById("loader").innerHTML = "✨Teleporting✨ " + loaderCurr + "%"
+            }
+            function incProg() {
+                ++loaderCurr < loaderNext && (setLoader(),
+                loaderTid = setTimeout(incProg, 200))
+            }
+            incProg()
+        </script>
+        <div class="wrapper noclicky" style="opacity:0">
+            <div id="glass">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/clear.webp" alt="" width="100%" height="100%"/>
+            </div>
+            <div id="tvstencil">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvstencil.webp" alt="" width="827" height="400"/>
+            </div>
+            <div id="tvbackground">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvbackclean.webp" alt="Background TV image" width="827" height="580"/>
+            </div>
+            <div id="tvbuttons" class="tvremotebackground">
+                <ul>
+                    <li>
+                        <button id="btn_power" style="color:red" type="button" name="" value="" class="tvremote">POWER</button>
+                    </li>
+                    <li>
+                        <button id="btn_next" type="button" name="" value="" class="tvremote">CH &#x25B2;</button>
+                    </li>
+                    <li>
+                        <button id="btn_prev" type="button" name="" value="" class="tvremote">CH &#x25BC;</button>
+                    </li>
+                    <li>
+                        <button id="btn_volup" type="button" name="" value="" class="tvremote">VOL +</button>
+                    </li>
+                    <li>
+                        <button id="btn_voldn" type="button" name="" value="" class="tvremote">VOL -</button>
+                    </li>
+                    <li>
+                        <button id="btn_menu" type="button" name="" value="" class="tvremote">MENU</button>
+                    </li>
+                </ul>
+            </div>
+            <div id="iconreport">
+                <img draggable="false" src="https://00s.myretrotvs.com/https://00s.myretrotvs.com/https://00s.myretrotvs.com/img/reporticon.svg" alt="Report Video Correction" width="32" height="32"/>
+            </div>
+            <div id="iconbsky">
+                <img draggable="false" src="https://00s.myretrotvs.com/https://00s.myretrotvs.com/img/bluesky.svg" alt="Share on Bluesky" width="32" height="32"/>
+            </div>
+            <img draggable="false" src="https://00s.myretrotvs.com/img/btn_suggest.png" id="iconsuggest" alt="Suggestion box" width="32" height="29"/>
+            <div id="remotestatus"></div>
+            <div id="tvfilters">
+                <form>
+                    <input id="box_c" type="checkbox" value="0"/>
+                    <label for="box_c" name="lbl_c" class="css-label"></label>
+                    <input id="box_s" type="checkbox" value="1"/>
+                    <label for="box_s" name="lbl_s" class="css-label"></label>
+                    <input id="box_a" type="checkbox" value="2"/>
+                    <label for="box_a" name="lbl_a" class="css-label"></label>
+                    <input id="box_d" type="checkbox" value="3"/>
+                    <label for="box_d" name="lbl_d" class="css-label"></label>
+                    <input id="box_g" type="checkbox" value="4"/>
+                    <label for="box_g" name="lbl_g" class="css-label"></label>
+                    <input id="box_k" type="checkbox" value="5"/>
+                    <label for="box_k" name="lbl_k" class="css-label"></label>
+                    <input id="box_e" type="checkbox" value="6"/>
+                    <label for="box_e" name="lbl_e" class="css-label"></label>
+                    <input id="box_m" type="checkbox" value="7"/>
+                    <label for="box_m" name="lbl_m" class="css-label"></label>
+                    <input id="box_n" type="checkbox" value="8"/>
+                    <label for="box_n" name="lbl_n" class="css-label"></label>
+                    <input id="box_o" type="checkbox" value="9"/>
+                    <label for="box_o" name="lbl_o" class="css-label"></label>
+                    <input id="box_z" type="checkbox" value="10"/>
+                    <label for="box_z" name="lbl_z" class="css-label"></label>
+                    <input id="box_p" type="checkbox" value="11"/>
+                    <label for="box_p" name="lbl_p" class="css-label"></label>
+                    <input id="box_r" type="checkbox" value="12"/>
+                    <label for="box_r" name="lbl_r" class="css-label"></label>
+                    <input id="box_t" type="checkbox" value="13"/>
+                    <label for="box_t" name="lbl_t" class="css-label"></label>
+                    <input id="box_f" type="checkbox" value="14"/>
+                    <label for="box_f" name="lbl_f" class="css-label"></label>
+                    <span style="font-size:small;line-height:15px">
+                        Select <label id="filter_all" name="filter_all">All</label>
+                        | <label id="filter_none" name="filter_none">None</label>
+                    </span>
+                </form>
+            </div>
+            <div id="yearbar">
+                <div name="0" class="year"></div>
+                <div name="1" class="year"></div>
+                <div name="2" class="year"></div>
+                <div name="3" class="year"></div>
+                <div name="4" class="year"></div>
+                <div name="5" class="year"></div>
+                <div name="6" class="year"></div>
+                <div name="7" class="year"></div>
+                <div name="8" class="year"></div>
+                <div name="9" class="year"></div>
+            </div>
+            <div id="guide">
+                <a href="https://www.myretrotvs.com" rel="noopener" target="_blank">
+                    <img draggable="false" src="https://00s.myretrotvs.com/img/guideicon.png" alt="TV guide" width="32" height="32"/>
+                </a>
+            </div>
+            <div id="channellabel">
+                <span class="chanspan"></span>
+            </div>
+            <div id="logo">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/logoboxcreased.webp" alt="TV logo" width="112" height="72"/>
+            </div>
+            <div id="hand">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/hand.webp" alt="Hand pointing to power button" width="54" height="47"/>
+            </div>
+            <div id="tvpanel_menu">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvdial.webp" alt="Toggle menu" width="10" height="10"/>
+            </div>
+            <div id="tvpanel_voldn">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvdial.webp" alt="Lower volume" width="10" height="10"/>
+            </div>
+            <div id="tvpanel_volup">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvdial.webp" alt="Increase volume" width="10" height="10"/>
+            </div>
+            <div id="tvpanel_chdn">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvdial.webp" alt="Next channel" width="10" height="10"/>
+            </div>
+            <div id="tvpanel_chup">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvdial.webp" alt="Previous channel" width="10" height="10"/>
+            </div>
+            <div id="helpback"></div>
+            <div id="help"></div>
+            <div id="statusbar">
+                <span class="status"></span>
+            </div>
+            <div id="tvknob">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvknob.webp" alt="TV knob" width="20" height="19"/>
+            </div>
+            <div class="led-green" id="tvled"></div>
+            <div class="led-red" id="tvledmini"></div>
+            <div id="tubeglow"></div>
+            <div id="myytplayer"></div>
+            <div class="tvcurtain"></div>
+            <div id="tvstatic">
+                <img draggable="false" src="https://00s.myretrotvs.com/img/tvstatic.gif" alt="" width="100%" height="100%"/>
+            </div>
+            <div id="lcdbar"></div>
+            <div id="credit">
+                created by <a href="https://bsky.app/profile/joeycato.bsky.social" rel="noopener" target="_blank">@joeycato</a>
+            </div>
+            <div id="sidebar">
+                <div class="sideitem">
+                    <a href="https://50s.myretrotvs.com" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/img/my50stv.webp" alt="My 50s TV website" width="74" height="120"/>
+                    </a>
+                </div>
+                <div class="sideitem">
+                    <a href="https://60s.myretrotvs.com" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/https://00s.myretrotvs.com/https://00s.myretrotvs.com/https://00s.myretrotvs.com/img/my60stv.webp" alt="My 60s TV website" width="121" height="80"/>
+                    </a>
+                </div>
+                <div class="sideitem">
+                    <a href="https://70s.myretrotvs.com" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/https://00s.myretrotvs.com/https://00s.myretrotvs.com/img/my70stv.webp" alt="My 70s TV website" width="101" height="80"/>
+                    </a>
+                </div>
+                <div class="sideitem">
+                    <a href="https://80s.myretrotvs.com" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/https://00s.myretrotvs.com/img/my80stv.webp" alt="My 80s TV website" width="85" height="80"/>
+                    </a>
+                </div>
+                <div class="sideitem">
+                    <a href="https://90s.myretrotvs.com" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/img/my90stv.webp" alt="My 90s TV website" width="93" height="80"/>
+                    </a>
+                </div>
+                <div class="sideitem">
+                    <link href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext" rel="stylesheet"/>
+                    <a class="action-button bmc-button" href="https://www.buymeacoffee.com/myretrotvs" rel="noopener" target="_blank">
+                        <img draggable="false" src="https://00s.myretrotvs.com/img/bmclogo.svg" alt="Donate a coffee"/>
+                        <span>Donate a coffee</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

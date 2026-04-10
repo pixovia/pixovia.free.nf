@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixovia TV - Global IPTV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #ff3e3e;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background: radial-gradient(circle at top right, #1a1a1a, #050505);
+            color: #efefef;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+        }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+        .bento-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .bento-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+        .active-nav {
+            background: linear-gradient(90deg, var(--accent), transparent);
+            border-left: 3px solid var(--accent);
+            color: white;
+        }
+        .server-btn {
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .server-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: transparent;
+        }
+        #video-frame {
+            aspect-ratio: 16/9;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        .custom-loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid transparent;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="h-20 flex flex-col md:flex-row items-center justify-between px-6 glass-panel z-50 py-2 gap-4 md:gap-0">
+        <div class="flex items-center gap-6 shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black text-white italic">P</div>
+                <span class="font-bold tracking-widest text-lg">PIXOVIA <span class="text-red-500 text-xs font-normal">STREAM</span></span>
+            </div>
+        </div>
+
+        <!-- Scrollable Server Selection -->
+        <div class="flex bg-white/5 rounded-xl p-1 gap-1 border border-white/10 overflow-x-auto no-scrollbar max-w-full md:max-w-2xl">
+            <button onclick="switchServer('s2')" id="btn-s2" class="server-btn active px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S2 (Xumo)</button>
+            <button onclick="switchServer('s3')" id="btn-s3" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S3 (Local)</button>
+            <button onclick="switchServer('s4_lg')" id="btn-s4_lg" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S4 (LG)</button>
+            <button onclick="switchServer('s4_rok')" id="btn-s4_rok" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S4 (Roku)</button>
+            <button onclick="switchServer('s5')" id="btn-s5" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S5 (Redbox)</button>
+            <button onclick="switchServer('s6')" id="btn-s6" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S6 (Distro)</button>
+            <button onclick="switchServer('s7')" id="btn-s7" class="server-btn px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-tighter">S7 (Xiaomi)</button>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs text-gray-400 shrink-0">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span id="stat-count">Loading...</span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 glass-panel border-r border-white/5 flex flex-col hidden lg:flex">
+            <div class="p-6 overflow-hidden flex flex-col h-full">
+                <div class="relative group mb-6">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <input type="text" id="search" placeholder="Search..." 
+                           class="w-full bg-white/5 border border-white/10 rounded-lg py-1.5 pl-9 pr-4 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all text-xs">
+                </div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Categories</p>
+                <nav id="category-list" class="space-y-1 overflow-y-auto no-scrollbar flex-1"></nav>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col relative">
+            <!-- Player View -->
+            <div id="player-view" class="hidden absolute inset-0 z-40 bg-black/95 flex flex-col p-4 md:p-8 overflow-y-auto no-scrollbar">
+                <div class="max-w-6xl mx-auto w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="closePlayer()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-chevron-left"></i> Exit Cinema
+                        </button>
+                    </div>
+                    <div id="video-frame" class="relative group bg-black rounded-3xl overflow-hidden ring-1 ring-white/10">
+                        <video id="main-video" class="w-full h-full" controls autoplay></video>
+                        <div id="error-screen" class="hidden absolute inset-0 bg-neutral-900/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">Stream Offline</h3>
+                            <p class="text-gray-400 text-xs mt-2">This channel might be currently unavailable or region-locked.</p>
+                            <button onclick="retryCurrent()" class="mt-6 bg-red-600 px-8 py-2.5 rounded-full font-bold">Retry</button>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <span id="playing-group" class="text-red-500 text-xs font-bold uppercase tracking-widest">Live</span>
+                        <h1 id="playing-name" class="text-3xl font-black mt-1 uppercase tracking-tight">Channel Name</h1>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div class="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar">
+                <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 z-30">
+                    <div class="custom-loader mb-4"></div>
+                    <p id="loading-text" class="text-gray-400 animate-pulse">Syncing Sources...</p>
+                </div>
+                <div id="channel-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const PROXIES = [
+            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://proxy.cors.sh/${url}`
+        ];
+
+        const SOURCES = {
+            s2: 'https://www.apsattv.com/xumo.m3u',
+            s3: 'https://www.apsattv.com/localnow.m3u',
+            s4_lg: 'https://www.apsattv.com/lg.m3u',
+            s4_rok: 'https://www.apsattv.com/rok.m3u',
+            s5: 'https://www.apsattv.com/redbox.m3u',
+            s6: 'https://www.apsattv.com/distro.m3u',
+            s7: 'https://www.apsattv.com/xiaomi.m3u'
+        };
+        
+        let currentServer = 's2';
+        let channels = [];
+        let filtered = [];
+        let hls = null;
+        let activeChannel = null;
+
+        async function safeSetText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        }
+
+        async function fetchWithRetry(url) {
+            let lastError = null;
+            for (let proxyFn of PROXIES) {
+                try {
+                    const proxiedUrl = proxyFn(url);
+                    const res = await fetch(proxiedUrl);
+                    if (!res.ok) continue;
+                    
+                    if (proxiedUrl.includes('allorigins')) {
+                        const json = await res.json();
+                        return json.contents;
+                    }
+                    return await res.text();
+                } catch (e) {
+                    lastError = e;
+                    console.warn(`Proxy failed:`, e);
+                }
+            }
+            throw lastError || new Error('All proxies failed');
+        }
+
+        async function init(server = 's2') {
+            currentServer = server;
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.remove('hidden');
+            
+            safeSetText('loading-text', `Fetching Playlist...`);
+            
+            try {
+                const text = await fetchWithRetry(SOURCES[server]);
+                channels = parse(text);
+                filtered = channels;
+                
+                safeSetText('stat-count', `${channels.length.toLocaleString()} Channels`);
+                renderSidebar();
+                renderGrid(channels);
+                if (overlay) overlay.classList.add('hidden');
+            } catch (err) {
+                console.error("Init Error:", err);
+                if (overlay) {
+                    overlay.innerHTML = `<div class="text-center p-8 bg-red-900/10 rounded-2xl border border-red-500/20 max-w-xs">
+                        <i class="fas fa-exclamation-triangle text-red-500 mb-3 text-2xl"></i>
+                        <p class="text-red-500 font-bold mb-2">Source Timeout</p>
+                        <p class="text-gray-500 text-[10px] mb-4">The playlist could not be fetched. Check your internet or try another server.</p>
+                        <button onclick="location.reload()" class="bg-red-600 px-6 py-2 rounded-lg text-xs font-bold">Reload App</button>
+                    </div>`;
+                }
+            }
+        }
+
+        function switchServer(server) {
+            if (currentServer === server) return;
+            document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-${server}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            init(server);
+        }
+
+        function parse(data) {
+            const list = [];
+            const lines = data.split('\n');
+            let current = null;
+
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const nameParts = line.split(/,(.*)/);
+                    const name = nameParts[1] ? nameParts[1].trim() : 'Channel';
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    const groupMatch = line.match(/group-title="([^"]+)"/);
+                    current = { 
+                        name, 
+                        logo: logoMatch ? logoMatch[1] : '', 
+                        group: (groupMatch ? groupMatch[1] : 'General').replace(/;/g, ' & ') 
+                    };
+                } else if (line.startsWith('http')) {
+                    if (current) {
+                        current.url = line;
+                        list.push(current);
+                        current = null;
+                    }
+                }
+            }
+            return list;
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('channel-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            // Limit grid display for massive playlists to prevent browser lag
+            const displayList = data.slice(0, 500);
+            
+            displayList.forEach(chan => {
+                const card = document.createElement('div');
+                card.className = 'bento-card group glass-panel rounded-2xl p-4 cursor-pointer flex flex-col items-center border border-white/5';
+                card.onclick = () => play(chan);
+                
+                const placeholder = `https://ui-avatars.com/api/?name=${encodeURIComponent(chan.name)}&background=111&color=ff3e3e&bold=true`;
+
+                card.innerHTML = `
+                    <div class="relative w-full aspect-video mb-3 bg-black/40 rounded-xl flex items-center justify-center p-2 overflow-hidden">
+                        <img src="${chan.logo || placeholder}" class="max-h-full max-w-full object-contain" onerror="this.src='${placeholder}'">
+                        <div class="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/10 transition-colors flex items-center justify-center">
+                            <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all"></i>
+                        </div>
+                    </div>
+                    <div class="w-full text-center">
+                        <p class="text-[9px] text-red-500 font-bold uppercase truncate mb-1 opacity-70 tracking-tighter">${chan.group}</p>
+                        <h4 class="text-[11px] font-bold line-clamp-2 leading-tight group-hover:text-white transition-colors">${chan.name}</h4>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderSidebar() {
+            const container = document.getElementById('category-list');
+            if (!container) return;
+            const groups = ['All Channels', ...new Set(channels.map(c => c.group))].sort();
+            container.innerHTML = '';
+            
+            groups.forEach((group, idx) => {
+                if(!group) return;
+                const item = document.createElement('div');
+                item.className = `px-3 py-2 rounded-lg text-[11px] cursor-pointer transition-all hover:bg-white/5 text-gray-400 category-item ${idx===0?'active-nav':''}`;
+                item.innerHTML = `<i class="fas fa-layer-group text-[9px] mr-3 opacity-30"></i> ${group}`;
+                item.onclick = () => {
+                    document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active-nav'));
+                    item.classList.add('active-nav');
+                    const groupData = group === 'All Channels' ? channels : channels.filter(c => c.group === group);
+                    renderGrid(groupData);
+                };
+                container.appendChild(item);
+            });
+        }
+
+        function play(chan) {
+            activeChannel = chan;
+            const view = document.getElementById('player-view');
+            const video = document.getElementById('main-video');
+            if (!view || !video) return;
+
+            view.classList.remove('hidden');
+            document.getElementById('error-screen').classList.add('hidden');
+            safeSetText('playing-name', chan.name);
+            safeSetText('playing-group', chan.group);
+
+            if (hls) hls.destroy();
+
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                hls.loadSource(chan.url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.ERROR, (e, data) => {
+                    if (data.fatal) document.getElementById('error-screen').classList.remove('hidden');
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = chan.url;
+            }
+        }
+
+        function closePlayer() {
+            if (hls) hls.destroy();
+            const video = document.getElementById('main-video');
+            if (video) {
+                video.pause();
+                video.src = "";
+            }
+            const view = document.getElementById('player-view');
+            if (view) view.classList.add('hidden');
+        }
+
+        function retryCurrent() {
+            if (activeChannel) play(activeChannel);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const results = channels.filter(c => 
+                        c.name.toLowerCase().includes(term) || 
+                        c.group.toLowerCase().includes(term)
+                    );
+                    renderGrid(results);
+                });
+            }
+            init('s2');
+        });
+    </script>
+</body>
+</html>
