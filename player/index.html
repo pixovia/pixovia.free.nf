@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Vision Player</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font for a premium feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        
+        /* Thumb styling */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Track styling */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 3px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1.5px;
+        }
+
+        /* Hide Scrollbar in Fullscreen */
+        .no-cursor { cursor: none; }
+        
+        /* Smooth fade transitions */
+        .fade-enter { opacity: 0; transition: opacity 0.3s ease-out; }
+        .fade-enter-active { opacity: 1; }
+        .fade-exit { opacity: 1; transition: opacity 0.3s ease-in; }
+        .fade-exit-active { opacity: 0; }
+
+        /* Double tap animation */
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .ripple-effect {
+            animation: ripple 0.5s linear;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4 text-white">
+
+    <!-- Player Container -->
+    <!-- 'group' class allows us to detect hover on the whole player to show/hide controls -->
+    <div id="video-container" class="relative group w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 select-none">
+        
+        <!-- Video Element -->
+        <!-- object-contain ensures ANY ratio video fits inside without cropping -->
+        <video 
+            id="main-video" 
+            class="w-full h-full object-contain cursor-pointer" 
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+            poster="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+            preload="metadata"
+            playsinline
+        >
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+
+        <!-- Big Center Play Button (Animate on Click) -->
+        <div id="center-play-icon" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 opacity-0 bg-black/30">
+            <div class="bg-black/50 p-6 rounded-full backdrop-blur-sm transform transition-transform scale-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+        </div>
+
+        <!-- Double Tap Visual Feedback (Left/Right) -->
+        <div id="ripple-left" class="absolute left-10 top-1/2 -translate-y-1/2 bg-white/20 p-4 rounded-full opacity-0 pointer-events-none">
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"></path></svg> <!-- Rewind Icon -->
+            <span class="absolute top-full left-1/2 -translate-x-1/2 text-xs font-bold mt-1">-10s</span>
+        </div>
+        <div id="ripple-right" class="absolute right-10 top-1/2 -translate-y-1/2 bg-white/20 p-4 rounded-full opacity-0 pointer-events-none">
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"></path></svg> <!-- Forward Icon -->
+            <span class="absolute top-full left-1/2 -translate-x-1/2 text-xs font-bold mt-1">+10s</span>
+        </div>
+
+        <!-- Bottom Controls Overlay -->
+        <!-- Opacity controlled via JS for idle hiding, but group-hover guarantees visibility on hover -->
+        <div id="controls-overlay" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-4 pt-12 transition-opacity duration-300 opacity-0 group-hover:opacity-100 flex flex-col gap-2">
+            
+            <!-- Progress Bar Container -->
+            <div class="relative w-full h-1 group/timeline cursor-pointer flex items-center" id="timeline-container">
+                <!-- Background Line -->
+                <div class="absolute w-full h-1 bg-white/30 rounded-full"></div>
+                <!-- Buffer Bar -->
+                <div id="buffer-bar" class="absolute h-1 bg-white/50 rounded-full w-0 transition-all duration-300"></div>
+                <!-- Progress Bar -->
+                <div id="progress-bar" class="absolute h-1 bg-indigo-500 rounded-full w-0 flex items-center justify-end">
+                    <div class="h-3 w-3 bg-white rounded-full shadow opacity-0 group-hover/timeline:opacity-100 transition-opacity"></div>
+                </div>
+                <!-- Hover Time Tooltip -->
+                <div id="time-tooltip" class="absolute bottom-4 -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded hidden pointer-events-none whitespace-nowrap">00:00</div>
+            </div>
+
+            <!-- Controls Row -->
+            <div class="flex items-center justify-between mt-2">
+                
+                <!-- Left Side: Play, Volume, Time -->
+                <div class="flex items-center gap-4">
+                    <!-- Play/Pause Button -->
+                    <button id="play-btn" class="hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Play">
+                        <!-- Icons swapped via JS -->
+                        <svg id="icon-play" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="icon-pause" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+
+                    <!-- Volume Container -->
+                    <div class="flex items-center gap-2 group/volume">
+                        <button id="mute-btn" class="hover:text-indigo-400 transition-colors focus:outline-none">
+                            <svg id="icon-vol-high" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                            <svg id="icon-vol-muted" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+                        </button>
+                        <!-- Volume Slider (expands on hover) -->
+                        <div class="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300 ease-out flex items-center">
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" class="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Time Display -->
+                    <div class="text-xs font-medium text-gray-300 font-mono">
+                        <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Right Side: Settings, PiP, Fullscreen -->
+                <div class="flex items-center gap-3">
+                    
+                    <!-- Speed Selector -->
+                    <div class="relative group/settings">
+                        <button class="hover:text-indigo-400 transition-colors focus:outline-none">
+                           <span class="text-xs font-bold border border-current rounded px-1 py-0.5">1x</span>
+                        </button>
+                        <!-- Speed Menu -->
+                        <div class="absolute bottom-8 right-0 bg-black/90 rounded-lg p-2 shadow-xl hidden group-hover/settings:flex flex-col gap-1 min-w-[80px] border border-white/10 backdrop-blur-md">
+                            <button class="text-xs hover:bg-white/20 px-2 py-1 rounded text-left speed-opt" data-speed="0.5">0.5x</button>
+                            <button class="text-xs hover:bg-white/20 px-2 py-1 rounded text-left speed-opt text-indigo-400" data-speed="1">1x (Normal)</button>
+                            <button class="text-xs hover:bg-white/20 px-2 py-1 rounded text-left speed-opt" data-speed="1.5">1.5x</button>
+                            <button class="text-xs hover:bg-white/20 px-2 py-1 rounded text-left speed-opt" data-speed="2">2x</button>
+                        </div>
+                    </div>
+
+                    <!-- PiP Button -->
+                    <button id="pip-btn" class="hover:text-indigo-400 transition-colors focus:outline-none" title="Picture in Picture">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4812a7 7 0 01-7-7m0 0v-8m0 0l-3-3m3 3h-8m8 0h9m0 0v-9m0 0L9 15"></path><path d="M21 3H3a2 2 0 00-2 2v14a2 2 0 002 2h18a2 2 0 002-2V5a2 2 0 00-2-2zM19 11h-6v4h6v-4z"></path></svg>
+                    </button>
+
+                    <!-- Fullscreen Button -->
+                    <button id="fullscreen-btn" class="hover:text-indigo-400 transition-colors focus:outline-none" title="Fullscreen">
+                        <svg id="icon-maximize" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                        <svg id="icon-minimize" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 10H4v5m5-5l-5 5m6 0h5v-5m-5 5l5-5m-6-6h5V4m-5 5l5-5m-6 0H4v5m5-5l-5 5"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Below (Optional) -->
+    <div class="fixed bottom-4 text-white/30 text-xs text-center w-full pointer-events-none">
+        Shortcuts: Space (Play/Pause) • F (Fullscreen) • Arrows (Seek) • M (Mute) • Double-tap sides (Seek)
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('video-container');
+            const video = document.getElementById('main-video');
+            const controlsOverlay = document.getElementById('controls-overlay');
+            const playBtn = document.getElementById('play-btn');
+            const iconPlay = document.getElementById('icon-play');
+            const iconPause = document.getElementById('icon-pause');
+            const progressBar = document.getElementById('progress-bar');
+            const bufferBar = document.getElementById('buffer-bar');
+            const timelineContainer = document.getElementById('timeline-container');
+            const timeTooltip = document.getElementById('time-tooltip');
+            const currentTimeEl = document.getElementById('current-time');
+            const totalDurationEl = document.getElementById('total-duration');
+            const muteBtn = document.getElementById('mute-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const iconVolHigh = document.getElementById('icon-vol-high');
+            const iconVolMuted = document.getElementById('icon-vol-muted');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const iconMaximize = document.getElementById('icon-maximize');
+            const iconMinimize = document.getElementById('icon-minimize');
+            const pipBtn = document.getElementById('pip-btn');
+            const speedOptions = document.querySelectorAll('.speed-opt');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const centerPlayIcon = document.getElementById('center-play-icon');
+
+            let isDragging = false;
+            let hideControlsTimeout;
+            let lastVolume = 1;
+
+            // --- Format Time Helper ---
+            function formatTime(seconds) {
+                const min = Math.floor(seconds / 60);
+                const sec = Math.floor(seconds % 60);
+                return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            }
+
+            // --- Play/Pause Logic ---
+            function togglePlay() {
+                if (video.paused || video.ended) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+                animateCenterPlay();
+            }
+
+            function updatePlayButton() {
+                if (video.paused) {
+                    iconPlay.classList.remove('hidden');
+                    iconPause.classList.add('hidden');
+                } else {
+                    iconPlay.classList.add('hidden');
+                    iconPause.classList.remove('hidden');
+                }
+            }
+
+            function animateCenterPlay() {
+                centerPlayIcon.classList.remove('opacity-0');
+                centerPlayIcon.classList.add('opacity-100');
+                // Pulse animation via CSS transform is already on wrapper
+                setTimeout(() => {
+                    centerPlayIcon.classList.remove('opacity-100');
+                    centerPlayIcon.classList.add('opacity-0');
+                }, 500);
+            }
+
+            playBtn.addEventListener('click', togglePlay);
+            video.addEventListener('play', updatePlayButton);
+            video.addEventListener('pause', updatePlayButton);
+            video.addEventListener('click', togglePlay);
+
+            // --- Loading State ---
+            video.addEventListener('waiting', () => loadingSpinner.classList.remove('hidden'));
+            video.addEventListener('playing', () => loadingSpinner.classList.add('hidden'));
+            video.addEventListener('canplay', () => loadingSpinner.classList.add('hidden'));
+
+            // --- Timeline & Time Update ---
+            video.addEventListener('timeupdate', () => {
+                const percent = (video.currentTime / video.duration) * 100;
+                progressBar.style.width = `${percent}%`;
+                currentTimeEl.textContent = formatTime(video.currentTime);
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                totalDurationEl.textContent = formatTime(video.duration);
+            });
+
+            video.addEventListener('progress', () => {
+                if (video.buffered.length > 0) {
+                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                    const duration = video.duration;
+                    if (duration > 0) {
+                        bufferBar.style.width = `${(bufferedEnd / duration) * 100}%`;
+                    }
+                }
+            });
+
+            // --- Seek Logic ---
+            function seek(e) {
+                const rect = timelineContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                video.currentTime = pos * video.duration;
+            }
+
+            timelineContainer.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                seek(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) seek(e);
+            });
+
+            document.addEventListener('mouseup', () => isDragging = false);
+
+            // Timeline Tooltip
+            timelineContainer.addEventListener('mousemove', (e) => {
+                const rect = timelineContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                const time = pos * video.duration;
+                
+                timeTooltip.classList.remove('hidden');
+                timeTooltip.style.left = `${e.clientX - rect.left}px`;
+                timeTooltip.textContent = formatTime(time);
+            });
+
+            timelineContainer.addEventListener('mouseleave', () => {
+                timeTooltip.classList.add('hidden');
+            });
+
+            // --- Volume Logic ---
+            function updateVolumeIcon(vol) {
+                if (vol === 0) {
+                    iconVolHigh.classList.add('hidden');
+                    iconVolMuted.classList.remove('hidden');
+                } else {
+                    iconVolHigh.classList.remove('hidden');
+                    iconVolMuted.classList.add('hidden');
+                }
+            }
+
+            volumeSlider.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                video.muted = e.target.value == 0;
+                updateVolumeIcon(video.volume);
+            });
+
+            muteBtn.addEventListener('click', () => {
+                if (video.volume > 0) {
+                    lastVolume = video.volume;
+                    video.volume = 0;
+                    volumeSlider.value = 0;
+                } else {
+                    video.volume = lastVolume;
+                    volumeSlider.value = lastVolume;
+                }
+                updateVolumeIcon(video.volume);
+            });
+
+            // --- Fullscreen Logic ---
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement) {
+                    iconMaximize.classList.add('hidden');
+                    iconMinimize.classList.remove('hidden');
+                    container.classList.add('rounded-none'); // Remove rounded corners in FS
+                } else {
+                    iconMaximize.classList.remove('hidden');
+                    iconMinimize.classList.add('hidden');
+                    container.classList.remove('rounded-none');
+                }
+            });
+
+            // --- PiP Logic ---
+            pipBtn.addEventListener('click', async () => {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else {
+                        await video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error("PiP failed", error);
+                }
+            });
+
+            // --- Speed Logic ---
+            speedOptions.forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    const speed = parseFloat(e.target.dataset.speed);
+                    video.playbackRate = speed;
+                    
+                    // Update UI text
+                    speedOptions.forEach(o => o.classList.remove('text-indigo-400'));
+                    e.target.classList.add('text-indigo-400');
+                    e.target.closest('.group\\/settings').querySelector('button span').textContent = speed + 'x';
+                });
+            });
+
+            // --- Auto Hide Controls ---
+            function showControls() {
+                controlsOverlay.style.opacity = '1';
+                container.style.cursor = 'default';
+                clearTimeout(hideControlsTimeout);
+                hideControlsTimeout = setTimeout(() => {
+                    if (!video.paused && !isDragging) {
+                        controlsOverlay.style.opacity = '0';
+                        container.style.cursor = 'none';
+                    }
+                }, 3000);
+            }
+
+            container.addEventListener('mousemove', showControls);
+            container.addEventListener('click', showControls);
+            
+            // --- Double Tap to Seek (YouTube Style) ---
+            let lastTapTime = 0;
+            const doubleTapDelay = 300;
+
+            container.addEventListener('click', (e) => {
+                // Ignore clicks on controls bar
+                if(e.target.closest('#controls-overlay')) return;
+
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                
+                if (tapLength < doubleTapDelay && tapLength > 0) {
+                    // Double tap detected
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    
+                    if (x < rect.width / 3) {
+                        // Left side - Rewind
+                        video.currentTime -= 10;
+                        showRipple('left');
+                    } else if (x > (rect.width * 2) / 3) {
+                        // Right side - Forward
+                        video.currentTime += 10;
+                        showRipple('right');
+                    }
+                }
+                lastTapTime = currentTime;
+            });
+
+            function showRipple(side) {
+                const ripple = document.getElementById(`ripple-${side}`);
+                ripple.classList.remove('hidden');
+                ripple.classList.add('ripple-effect');
+                // Reset animation
+                setTimeout(() => {
+                    ripple.classList.remove('ripple-effect');
+                }, 500);
+            }
+
+            // --- Keyboard Shortcuts ---
+            document.addEventListener('keydown', (e) => {
+                // Don't trigger if focus is on inputs
+                if (document.activeElement.tagName === 'INPUT') return;
+
+                switch(e.key.toLowerCase()) {
+                    case ' ':
+                    case 'k':
+                        e.preventDefault();
+                        togglePlay();
+                        break;
+                    case 'f':
+                        toggleFullscreen();
+                        break;
+                    case 'm':
+                        if(video.volume > 0) muteBtn.click();
+                        else muteBtn.click();
+                        break;
+                    case 'arrowright':
+                        video.currentTime += 5;
+                        break;
+                    case 'arrowleft':
+                        video.currentTime -= 5;
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

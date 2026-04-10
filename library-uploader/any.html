@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Upload to Supabase</title>
+<style>
+body { font-family: system-ui, sans-serif; background:#f7f9fc; color:#111; padding:20px; }
+.wrap { max-width:800px; margin:0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+input, select, button { width:100%; padding:10px; margin-top:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; }
+button { cursor:pointer; background:#2563eb; color:#fff; border:none; }
+table { width:100%; margin-top:20px; border-collapse:collapse; }
+th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; font-size:14px; }
+.success { color:green; margin-top:10px; }
+.error { color:red; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2>Manual Uploader → Supabase</h2>
+<p>Enter data for your <code>files</code> table below.</p>
+
+<label>Supabase Anon Key:</label>
+<input id="supabaseKey" type="text" placeholder="Your Supabase anon key">
+
+<label>ID:</label>
+<input id="idField" type="text" placeholder="Example: pexels.sunset.3irpejr">
+
+<label>Title:</label>
+<input id="titleField" type="text" placeholder="Title of file">
+
+<label>File URL:</label>
+<input id="urlField" type="text" placeholder="Direct file URL (https://...)">
+
+<label>Type:</label>
+<select id="typeField">
+  <option value="image">Image</option>
+  <option value="video">Video</option>
+  <option value="audio">Audio</option>
+  <option value="file">File</option>
+</select>
+
+<label>Uploader:</label>
+<input id="uploaderField" type="text" placeholder="Uploader name (e.g. Unsplash, Giphy, Pexels, You)">
+
+<label>Album ID:</label>
+<input id="albumField" type="text" placeholder="Example: custom.album.9q4j2m7">
+
+<button id="uploadBtn">Upload to Supabase</button>
+<p id="status"></p>
+
+<table id="table"><thead><tr>
+<th>ID</th><th>Title</th><th>File URL</th><th>Uploader</th><th>Type</th><th>Album ID</th>
+</tr></thead><tbody></tbody></table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+const TABLE_NAME = "files";
+let supabaseClient = null;
+
+const statusEl = document.getElementById("status");
+const tableBody = document.querySelector("#table tbody");
+
+function setStatus(msg, type="info") {
+  statusEl.textContent = msg;
+  statusEl.className = type === "error" ? "error" : "success";
+}
+
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const supabaseKey = document.getElementById("supabaseKey").value.trim();
+  const id = document.getElementById("idField").value.trim();
+  const title = document.getElementById("titleField").value.trim();
+  const file_url = document.getElementById("urlField").value.trim();
+  const file_type = document.getElementById("typeField").value.trim();
+  const uploader = document.getElementById("uploaderField").value.trim();
+  const album_id = document.getElementById("albumField").value.trim();
+
+  if(!supabaseKey || !id || !title || !file_url || !file_type || !uploader || !album_id) {
+    setStatus("Please fill all fields!", "error");
+    return;
+  }
+
+  if(!supabaseClient) supabaseClient = supabase.createClient(SUPABASE_URL, supabaseKey);
+
+  const row = { id, title, file_url, file_type, uploader, album_id };
+
+  setStatus("Uploading...");
+  const { error } = await supabaseClient.from(TABLE_NAME).upsert([row], { onConflict:["id"] });
+
+  if(error) {
+    console.error(error);
+    setStatus("❌ Upload failed: " + error.message, "error");
+  } else {
+    setStatus("✅ Uploaded successfully!");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${id}</td><td>${title}</td><td><a href="${file_url}" target="_blank">Open</a></td><td>${uploader}</td><td>${file_type}</td><td>${album_id}</td>`;
+    tableBody.prepend(tr);
+  }
+});
+</script>
+</body>
+</html>

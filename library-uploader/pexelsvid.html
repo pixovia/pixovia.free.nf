@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pexels Videos → Supabase</title>
+<style>
+body { font-family: system-ui, sans-serif; background:#f6f8fb; color:#111; padding:18px; }
+.wrap { max-width:900px; margin:0 auto; }
+input, button { padding:8px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
+button { cursor:pointer; background:#ef4444; color:#fff; border:none; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-top:14px; }
+.card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+.card video { width:100%; height:160px; object-fit:cover; }
+.card .meta { padding:10px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Pexels Videos → Supabase</h1>
+<p>Fetch videos from Pexels and upload metadata into Supabase table <code>files</code>.</p>
+
+<label>Pexels API Key:</label><br>
+<input id="pexelsKey" type="text" placeholder="Paste your Pexels OneAPI key" style="width:100%"><br>
+
+<label>Supabase Anon Key:</label><br>
+<input id="supabaseKey" type="text" placeholder="Paste your Supabase anon key" style="width:100%"><br>
+
+<label>Search Query (blank for popular):</label><br>
+<input id="query" type="text" placeholder="nature, ocean, city..." style="width:100%"><br>
+
+<button id="uploadBtn">Fetch & Upload Videos</button>
+<p id="status">Idle.</p>
+<div id="preview" class="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+const TABLE_NAME = "files";
+const PER_PAGE = 80;
+const ALBUM_ID = "pexels.videos.9q4j2m7";
+
+let supabaseClient = null;
+const seenPexelsIds = new Set();
+const existingFileUrls = new Set();
+
+const statusEl = document.getElementById("status");
+const preview = document.getElementById("preview");
+
+function setStatus(txt){ statusEl.textContent = txt; }
+
+function randomId(){
+  const chars="abcdefghijklmnopqrstuvwxyz0123456789";
+  let out="";
+  for(let i=0;i<7;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+
+function generateCustomId(title){
+  const clean = title.toLowerCase().trim().replace(/\s+/g,".").replace(/[^a-z0-9.-]/g,"").replace(/\.+/g,".");
+  return clean + "." + randomId();
+}
+
+function mapVideo(video) {
+  let titlePart = "";
+  // Extract middle part from URL
+  const match = video.url.match(/\/video\/(.*?)\/?$/);
+  if (match && match[1]) {
+    titlePart = match[1].replace(/-/g, " "); // replace dashes with spaces
+  } else {
+    titlePart = "Untitled";
+  }
+
+  // Skip titles longer than 255 characters
+  if (titlePart.length > 255) return null;
+
+  // Pick the highest quality video file
+  let file_url = "";
+  if (Array.isArray(video.video_files) && video.video_files.length) {
+    const sorted = video.video_files.sort((a, b) => b.width - a.width);
+    file_url = sorted[0].link;
+  }
+  if (!file_url) return null;
+
+  // Create ID: prepend "pexels.", replace spaces with dots, add random 7-char suffix
+  const idBase = titlePart.toLowerCase().trim().replace(/\s+/g, ".").replace(/[^a-z0-9.]/g, "");
+  const id = "pexels." + idBase + "." + randomId();
+
+  return {
+    
+    id: id,
+    title: titlePart,
+    file_url: file_url,
+    file_type: "video",
+    uploader: "Pexels",
+    album_id: ALBUM_ID
+  };
+}
+
+
+function createCard(row){
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerHTML='<video src="'+row.file_url+'" controls muted></video><div class="meta"><strong>'+row.title+'</strong><br><small>ID: '+row.id+'</small></div>';
+  preview.appendChild(div);
+}
+
+async function fetchPexelsVideos(pexelsKey, query){
+  const base = query ? "https://api.pexels.com/videos/search" : "https://api.pexels.com/videos/popular";
+  const url = query ? base + "?query="+encodeURIComponent(query)+"&per_page="+PER_PAGE : base + "?per_page="+PER_PAGE;
+  const res = await fetch(url, { headers:{ Authorization: pexelsKey }});
+  const data = await res.json();
+  return data.videos || [];
+}
+
+async function uploadRows(rows){
+  if(rows.length===0){ setStatus("No new unique videos to upload."); return; }
+  const { error } = await supabaseClient.from(TABLE_NAME).upsert(rows, { onConflict:["file_url"] });
+  if(error){ console.error(error); setStatus("Partial upload skipped: "+error.message); }
+  else setStatus("✅ Uploaded "+rows.length+" unique videos to Supabase!");
+}
+
+document.getElementById("uploadBtn").addEventListener("click", async ()=>{
+  const pexelsKey=document.getElementById("pexelsKey").value.trim();
+  const supabaseKey=document.getElementById("supabaseKey").value.trim();
+  const query=document.getElementById("query").value.trim();
+  if(!pexelsKey || !supabaseKey){ alert("Please fill both keys."); return; }
+  if(!supabaseClient) supabaseClient=supabase.createClient(SUPABASE_URL, supabaseKey);
+
+  setStatus("Fetching videos from Pexels...");
+  const results = await fetchPexelsVideos(pexelsKey, query);
+
+  const newRows=[];
+  preview.innerHTML="";
+  for(const v of results){
+    if(seenPexelsIds.has(v.id)) continue;
+    seenPexelsIds.add(v.id);
+    const row = mapVideo(v);
+    if(!row) continue;
+    if(existingFileUrls.has(row.file_url)) continue;
+    existingFileUrls.add(row.file_url);
+    newRows.push(row);
+    createCard(row);
+  }
+
+  setStatus("Uploading "+newRows.length+" unique videos to Supabase...");
+  await uploadRows(newRows);
+});
+</script>
+</body>
+</html>

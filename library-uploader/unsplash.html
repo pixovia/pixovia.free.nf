@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsplash → Supabase Files Uploader</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#f6f8fb; color:#111; padding:18px; }
+    .wrap { max-width:900px; margin:0 auto; }
+    input, button { padding:8px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
+    button { cursor:pointer; background:#2563eb; color:#fff; border:none; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:14px; }
+    .card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+    .card img { width:100%; height:140px; object-fit:cover; }
+    .card .meta { padding:10px; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Unsplash → Supabase Files Uploader</h1>
+    <p>Fetch images from Unsplash and upload metadata into your Supabase table <code>files</code>.</p>
+
+    <label>Unsplash Access Key:</label><br>
+    <input id="unsplashKey" type="text" placeholder="Unsplash API Key" style="width:100%"><br>
+
+    <label>Supabase Anon Key:</label><br>
+    <input id="supabaseKey" type="text" placeholder="Paste your Supabase anon key" style="width:100%"><br>
+
+    <label>Search Query (blank for random):</label><br>
+    <input id="query" type="text" placeholder="e.g. nature, city, ocean" style="width:100%"><br>
+
+    <button id="uploadBtn">Fetch & Upload to Supabase</button>
+    <p id="status">Idle.</p>
+    <div id="preview" class="grid"></div>
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // ==== CONFIG ====
+    const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+    const TABLE_NAME = "files";
+    const PER_PAGE = 10;
+    const ALBUM_ID = "unsplash.images.9q4j2m7";
+
+    const statusEl = document.getElementById("status");
+    const preview = document.getElementById("preview");
+
+    function setStatus(txt) { statusEl.textContent = txt; }
+
+    function randomId() {
+      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      let out = "";
+      for (let i = 0; i < 7; i++) {
+        out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+
+    function generateCustomId(title) {
+      const clean = title.toLowerCase()
+        .trim()
+        .replace(/\s+/g, ".")
+        .replace(/[^a-z0-9.-]/g, "")
+        .replace(/\.+/g, ".");
+      return clean + "." + randomId();
+    }
+
+    function pickBestImage(urls) {
+      return urls.full || urls.regular || urls.raw || urls.small || urls.thumb;
+    }
+
+    function mapPhoto(photo) {
+      const title = photo.description || photo.alt_description || "Untitled";
+      return {
+        id: generateCustomId(title),
+        title: title,
+        file_url: pickBestImage(photo.urls),
+        file_type: "image",
+        uploader: "Unsplash",
+        album_id: ALBUM_ID
+      };
+    }
+
+    function createCard(row) {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML =
+        '<img src="' + row.file_url + '" alt="' + row.title + '">' +
+        '<div class="meta">' +
+        "<strong>" + row.title + "</strong><br>" +
+        "<small>ID: " + row.id + "</small>" +
+        "</div>";
+      preview.appendChild(div);
+    }
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const unsplashKey = document.getElementById("unsplashKey").value.trim();
+      const supabaseKey = document.getElementById("supabaseKey").value.trim();
+      const query = document.getElementById("query").value.trim();
+
+      if (!unsplashKey || !supabaseKey) {
+        alert("Please fill in Unsplash and Supabase keys.");
+        return;
+      }
+
+      const supabaseClient = supabase.createClient(SUPABASE_URL, supabaseKey);
+
+      const base = query ? "https://api.unsplash.com/search/photos" : "https://api.unsplash.com/photos";
+      const url = query
+        ? base + "?query=" + encodeURIComponent(query) + "&per_page=" + PER_PAGE
+        : base + "?per_page=" + PER_PAGE;
+
+      setStatus("Fetching images from Unsplash...");
+      const res = await fetch(url, { headers: { Authorization: "Client-ID " + unsplashKey } });
+      const data = await res.json();
+      const results = query ? data.results : data;
+
+      if (!Array.isArray(results) || results.length === 0) {
+        setStatus("No images found.");
+        return;
+      }
+
+      const rows = results.map(mapPhoto);
+      preview.innerHTML = "";
+      rows.forEach(createCard);
+
+      setStatus("Uploading to Supabase...");
+      const { error } = await supabaseClient.from(TABLE_NAME).upsert(rows, { onConflict: ["id"] });
+      if (error) {
+        console.error(error);
+        setStatus("Upload failed: " + error.message);
+      } else {
+        setStatus("✅ Uploaded " + rows.length + " images to Supabase!");
+      }
+    });
+  </script>
+</body>
+</html>

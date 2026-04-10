@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Giphy GIFs → Supabase Auto Sync</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f6f8fb;color:#111;padding:18px;}
+.wrap{max-width:900px;margin:0 auto;}
+button{padding:8px 16px;margin:8px 4px;border:none;border-radius:6px;cursor:pointer;}
+#startBtn{background:#10b981;color:#fff;}
+#stopBtn{background:#ef4444;color:#fff;}
+.log{background:#fff;border-radius:8px;padding:10px;height:200px;overflow:auto;
+     box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Giphy GIFs → Supabase Auto Uploader</h1>
+<p>Automatically pulls trending/search GIF metadata (no stickers) and pushes it to Supabase.<br>
+Click <b>Start</b> to begin / <b>Stop</b> to end. Skips duplicates & titles &gt; 255 chars.</p>
+
+<label>Search Query (blank for trending):</label><br>
+<input id="query" type="text" style="width:100%" placeholder="funny, cats, memes..."><br>
+<button id="startBtn">Start</button><button id="stopBtn" disabled>Stop</button>
+<div id="status" class="log"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== CONFIGURATION (replace with your own keys) =====
+const SUPABASE_URL  = "https://fxcfusffpncorldogyku.supabase.co";
+const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4Y2Z1c2ZmcG5jb3JsZG9neWt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NDEwMzQsImV4cCI6MjA4MzAxNzAzNH0.7lF1aYo4eP2by4wAnSCTpqhElgN6_TdPsItvQtxNGPI"
+const GIPHY_KEY     = "lGom054jBZqj8cveSo8xkeZgIB2p4NBj";   // e.g. "dc6zaTOxFJmzC"
+const TABLE_NAME    = "files";
+const ALBUM_ID      = "giphy.gifs.helbo90";
+// ======================================================
+
+let supabaseClient=null, running=false, offset=0;
+const seenUrls=new Set(), seenIds=new Set();
+const logEl=document.getElementById("status");
+function log(m){logEl.innerHTML+="<div>"+m+"</div>";logEl.scrollTop=logEl.scrollHeight;}
+
+function randomId(){const c="abcdefghijklmnopqrstuvwxyz0123456789";let o="";for(let i=0;i<7;i++)o+=c[Math.floor(Math.random()*c.length)];return o;}
+function makeId(title){return title.toLowerCase().trim().replace(/\s+/g,".").replace(/[^a-z0-9.]/g,"").replace(/\.+/g,".")+"."+randomId();}
+
+function mapGif(g){
+  const t=g.title||g.slug||"Untitled"; if(t.length>255)return null;
+  const file_url=g.images?.original?.url; if(!file_url)return null;
+  return{
+    
+    id:"giphy.gif."+makeId(t),
+    title:t,
+    file_url:file_url,
+    file_type:"image",
+    uploader:"Giphy",
+    album_id:ALBUM_ID
+  };
+}
+
+async function fetchGifs(q){
+  const base=q
+    ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=50&offset=${offset}&rating=g`
+    : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=50&offset=${offset}&rating=g`;
+  const r=await fetch(base);
+  if(!r.ok)throw new Error("Giphy API "+r.status);
+  const j=await r.json(); return j.data||[];
+}
+
+async function upload(rows){
+  if(!rows.length)return;
+  const {error}=await supabaseClient.from(TABLE_NAME).upsert(rows,{onConflict:["file_url"]});
+  if(error)log("⚠ "+error.message); else log("✅ Uploaded "+rows.length+" GIFs");
+}
+
+async function loop(){
+  while(running){
+    try{
+      const q=document.getElementById("query").value.trim();
+      const gifs=await fetchGifs(q);
+      if(!gifs.length){log("No more results → restart offset 0");offset=0;continue;}
+      const rows=[];
+      for(const g of gifs){
+        if(seenIds.has(g.id))continue; seenIds.add(g.id);
+        const row=mapGif(g); if(!row)continue;
+        if(seenUrls.has(row.file_url))continue; seenUrls.add(row.file_url);
+        rows.push(row);
+      }
+      await upload(rows);
+      offset+=50;
+      await new Promise(r=>setTimeout(r,5000)); // 5 s delay between batches
+    }catch(e){log("Error: "+e.message);await new Promise(r=>setTimeout(r,10000));}
+  }
+}
+
+document.getElementById("startBtn").onclick=()=>{
+  if(!supabaseClient)supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  running=true;offset=0;log("▶ Auto-sync started…");
+  document.getElementById("startBtn").disabled=true;
+  document.getElementById("stopBtn").disabled=false;
+  loop();
+};
+
+document.getElementById("stopBtn").onclick=()=>{
+  running=false;
+  document.getElementById("startBtn").disabled=false;
+  document.getElementById("stopBtn").disabled=true;
+  log("⏹ Stopped.");
+};
+</script>
+</body>
+</html>

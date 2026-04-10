@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giphy GIFs → Supabase</title>
+<style>
+body { font-family: system-ui, sans-serif; background:#f6f8fb; color:#111; padding:18px; }
+.wrap { max-width:900px; margin:0 auto; }
+input, button { padding:8px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
+button { cursor:pointer; background:#a855f7; color:#fff; border:none; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:14px; }
+.card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+.card img { width:100%; height:160px; object-fit:cover; }
+.card .meta { padding:10px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Giphy GIFs → Supabase</h1>
+<p>Fetch GIFs (no stickers) from Giphy and upload metadata into your Supabase <code>files</code> table.</p>
+
+<label>Giphy API Key:</label><br>
+<input id="giphyKey" type="text" placeholder="Paste your Giphy API key" style="width:100%"><br>
+
+<label>Supabase Anon Key:</label><br>
+<input id="supabaseKey" type="text" placeholder="Paste your Supabase anon key" style="width:100%"><br>
+
+<label>Search Query (blank for trending):</label><br>
+<input id="query" type="text" placeholder="funny, cats, memes..." style="width:100%"><br>
+
+<button id="uploadBtn">Fetch & Upload GIFs</button>
+<p id="status">Idle.</p>
+<div id="preview" class="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+const TABLE_NAME = "files";
+const ALBUM_ID = "giphy.gifs.helbo90";
+const LIMIT = 50;
+
+let supabaseClient = null;
+const seenGiphyIds = new Set();
+const existingFileUrls = new Set();
+const statusEl = document.getElementById("status");
+const preview = document.getElementById("preview");
+
+function setStatus(txt){ statusEl.textContent = txt; }
+
+function randomId(){
+  const chars="abcdefghijklmnopqrstuvwxyz0123456789";
+  let out=""; for(let i=0;i<7;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+
+function generateCustomId(title){
+  const clean = title.toLowerCase().trim()
+    .replace(/\s+/g,".")
+    .replace(/[^a-z0-9.]/g,"")
+    .replace(/\.+/g,".");
+  return clean + "." + randomId();
+}
+
+function mapGif(gif){
+  let title = gif.title || gif.slug || "Untitled";
+  if(title.length>255) return null;
+  const file_url = gif.images.original.url;
+  const idBase = generateCustomId(title);
+  return {
+   
+    id: "giphy." + idBase,
+    title: title,
+    file_url: file_url,
+    file_type: "image",
+    uploader: "Giphy",
+    album_id: ALBUM_ID
+  };
+}
+
+function createCard(row){
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerHTML='<img src="'+row.file_url+'" alt="'+row.title+'"><div class="meta"><strong>'+row.title+'</strong><br><small>ID: '+row.id+'</small></div>';
+  preview.appendChild(div);
+}
+
+async function fetchGifs(apiKey, query){
+  let url = query
+    ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=${LIMIT}&rating=g`
+    : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${LIMIT}&rating=g`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.data || [];
+}
+
+async function uploadRows(rows){
+  if(rows.length===0){ setStatus("No new unique GIFs to upload."); return; }
+  const { error } = await supabaseClient.from(TABLE_NAME).upsert(rows,{ onConflict:["file_url"] });
+  if(error){ console.error(error); setStatus("Some duplicates skipped: "+error.message); }
+  else setStatus("✅ Uploaded "+rows.length+" GIFs to Supabase!");
+}
+
+document.getElementById("uploadBtn").addEventListener("click", async ()=>{
+  const giphyKey=document.getElementById("giphyKey").value.trim();
+  const supabaseKey=document.getElementById("supabaseKey").value.trim();
+  const query=document.getElementById("query").value.trim();
+  if(!giphyKey || !supabaseKey){ alert("Please fill both keys."); return; }
+  if(!supabaseClient) supabaseClient = supabase.createClient(SUPABASE_URL, supabaseKey);
+
+  setStatus("Fetching GIFs...");
+  const gifs = await fetchGifs(giphyKey, query);
+
+  const newRows=[];
+  preview.innerHTML="";
+  for(const g of gifs){
+    if(seenGiphyIds.has(g.id)) continue;
+    seenGiphyIds.add(g.id);
+    const row = mapGif(g);
+    if(!row) continue;
+    if(existingFileUrls.has(row.file_url)) continue;
+    existingFileUrls.add(row.file_url);
+    newRows.push(row);
+    createCard(row);
+  }
+
+  setStatus("Uploading "+newRows.length+" GIFs to Supabase...");
+  await uploadRows(newRows);
+});
+</script>
+</body>
+</html>

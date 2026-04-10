@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixovia Bulk Upload</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+textarea,input,select{
+width:100%;
+padding:12px;
+margin-top:8px;
+background:#1e293b;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+button{
+padding:14px;
+background:#2563eb;
+border:none;
+border-radius:6px;
+color:white;
+font-weight:bold;
+margin-top:15px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.success{
+color:#22c55e;
+margin-top:15px;
+}
+
+.error{
+color:#ef4444;
+margin-top:15px;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>Pixovia Bulk Upload</h2>
+
+<label>Bulk URLs (one per line)</label>
+<textarea id="urls" rows="10" placeholder="https://example.com/video.mp4"></textarea>
+
+<label>Uploader</label>
+<input id="uploader" placeholder="Uploader name">
+
+<label>File Type</label>
+<select id="file_type">
+<option value="video">Video</option>
+<option value="image">Image</option>
+</select>
+
+<label>Album ID</label>
+<input id="album_id" placeholder="Album ID">
+
+<label>Verified</label>
+<select id="is_verified">
+<option value="true">True</option>
+<option value="false">False</option>
+</select>
+    
+<label>Description</label>
+<textarea id="description" rows="3" placeholder="Common description for all files"></textarea>
+
+<label>Tags (comma separated)</label>
+<input id="tags" placeholder="anime, movie, trending">
+    
+<label>Created At (Default 2024)</label>
+<input type="datetime-local" id="created_at">
+
+<button onclick="uploadBulk()">Upload To Supabase</button>
+
+<div id="status"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4Y2Z1c2ZmcG5jb3JsZG9neWt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NDEwMzQsImV4cCI6MjA4MzAxNzAzNH0.7lF1aYo4eP2by4wAnSCTpqhElgN6_TdPsItvQtxNGPI";
+
+
+// Cache Fields
+window.onload = () => {
+
+uploader.value = localStorage.getItem("uploader") || "";
+file_type.value = localStorage.getItem("file_type") || "video";
+album_id.value = localStorage.getItem("album_id") || "";
+is_verified.value = localStorage.getItem("is_verified") || "true";
+created_at.value = localStorage.getItem("created_at") || "2024-01-01T00:00";
+description.value = localStorage.getItem("description") || "";
+tags.value = localStorage.getItem("tags") || "";
+    
+}
+
+
+function saveCache(){
+
+localStorage.setItem("uploader", uploader.value);
+localStorage.setItem("file_type", file_type.value);
+localStorage.setItem("album_id", album_id.value);
+localStorage.setItem("is_verified", is_verified.value);
+localStorage.setItem("created_at", created_at.value);
+localStorage.setItem("description", description.value);
+localStorage.setItem("tags", tags.value);
+    
+}
+
+
+function generateId(){
+
+const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+let id = "";
+
+for(let i=0;i<7;i++){
+id += chars[Math.floor(Math.random()*chars.length)];
+}
+
+return id;
+}
+
+
+function getTitle(url){
+
+let name = url.split('/').pop().split('?')[0];
+return name;
+
+}
+
+
+async function uploadBulk(){
+
+saveCache();
+
+const urls = document.getElementById("urls").value.split("\n").filter(x=>x.trim());
+
+const uploaderVal = uploader.value;
+const fileTypeVal = file_type.value;
+const albumVal = album_id.value;
+const verifiedVal = is_verified.value === "true";
+const descriptionVal = description.value;
+const tagsVal = tags.value;
+const rows = urls.map(url => ({
+
+id: generateId(),
+
+title: getTitle(url),
+
+file_url: url,
+
+uploader: uploaderVal,
+
+file_type: fileTypeVal,
+
+is_verified: verifiedVal,
+
+album_id: albumVal,
+    
+description: descriptionVal,
+
+tags: tagsVal,
+    
+created_at: new Date(created_at.value || "2024-01-01T00:00").toISOString()
+
+}))
+
+
+try{
+
+const res = await fetch(`${SUPABASE_URL}/rest/v1/files`,{
+
+method:"POST",
+
+headers:{
+
+"apikey":SUPABASE_KEY,
+"Authorization":`Bearer ${SUPABASE_KEY}`,
+"Content-Type":"application/json",
+"Prefer":"return=minimal"
+
+},
+
+body:JSON.stringify(rows)
+
+})
+
+
+if(res.ok){
+status.innerHTML = "<div class='success'>Uploaded Successfully</div>";
+urls.value="";
+}
+else{
+
+const text = await res.text();
+status.innerHTML = `<div class='error'>Error : ${text}</div>`;
+
+}
+
+}catch(e){
+
+status.innerHTML = `<div class='error'>${e}</div>`;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

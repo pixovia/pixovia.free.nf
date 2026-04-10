@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pexels → Supabase Files Uploader</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#f6f8fb; color:#111; padding:18px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  input, button { padding:8px; margin-top:6px; border:1px solid #ccc; border-radius:6px; }
+  button { cursor:pointer; background:#10b981; color:#fff; border:none; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:14px; }
+  .card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+  .card img { width:100%; height:140px; object-fit:cover; }
+  .card .meta { padding:10px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Pexels → Supabase Files Uploader</h1>
+<p>Fetch images from Pexels and upload metadata into Supabase table <code>files</code>.</p>
+
+<label>Pexels API Key:</label><br>
+<input id="pexelsKey" type="text" placeholder="Paste your Pexels OneAPI key" style="width:100%"><br>
+
+<label>Supabase Anon Key:</label><br>
+<input id="supabaseKey" type="text" placeholder="Paste your Supabase anon key" style="width:100%"><br>
+
+<label>Search Query (blank for curated):</label><br>
+<input id="query" type="text" placeholder="nature, city, ocean..." style="width:100%"><br>
+
+<button id="uploadBtn">Fetch & Upload to Supabase</button>
+<p id="status">Idle.</p>
+<div id="preview" class="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fxcfusffpncorldogyku.supabase.co";
+const TABLE_NAME = "files";
+const PER_PAGE = 80;
+const ALBUM_ID = "pexels.assets.collection";
+
+let supabaseClient = null;
+const seenPexelsIds = new Set();
+const existingFileUrls = new Set();
+
+const statusEl = document.getElementById("status");
+const preview = document.getElementById("preview");
+
+function setStatus(txt){ statusEl.textContent = txt; }
+
+function randomId(){
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  for(let i=0;i<7;i++) out += chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+
+function generateCustomId(title){
+  const clean = title.toLowerCase().trim().replace(/\s+/g,".").replace(/[^a-z0-9.-]/g,"").replace(/\.+/g,".");
+  return clean + "." + randomId();
+}
+
+function mapPhoto(photo){
+  const title = photo.alt || photo.photographer || "Untitled";
+  if(title.length > 255) return null; // skip long titles
+  const file_url = photo.src.original || photo.src.large2x || photo.src.large || photo.src.medium || photo.src.small;
+  return {
+    
+    id: generateCustomId(title),
+    title,
+    file_url,
+    file_type: "image",
+    uploader: "Pexels",
+    album_id: ALBUM_ID,
+    tags: ["ai","aimade","wallpaper","4kwallpaper","pexels"]
+  };
+}
+
+function createCard(row){
+  const div = document.createElement("div");
+  div.className="card";
+  div.innerHTML='<img src="'+row.file_url+'" alt="'+row.title+'"><div class="meta"><strong>'+row.title+'</strong><br><small>ID: '+row.id+'</small></div>';
+  preview.appendChild(div);
+}
+
+async function fetchPexels(pexelsKey, query){
+  const base = query ? "https://api.pexels.com/v1/search" : "https://api.pexels.com/v1/curated";
+  const url = query ? base + "?query="+encodeURIComponent(query)+"&per_page="+PER_PAGE : base + "?per_page="+PER_PAGE;
+  const res = await fetch(url, { headers: { Authorization: pexelsKey } });
+  const data = await res.json();
+  return data.photos || [];
+}
+
+async function uploadRows(rows){
+  if(rows.length === 0){ setStatus("No new unique rows to upload."); return; }
+  const { error } = await supabaseClient.from(TABLE_NAME).upsert(rows, { onConflict: ["file_url"] });
+  if(error){ console.error(error); setStatus("Upload partial / duplicate skipped: "+error.message); }
+  else setStatus("✅ Uploaded "+rows.length+" unique images to Supabase!");
+}
+
+document.getElementById("uploadBtn").addEventListener("click", async ()=>{
+  const pexelsKey = document.getElementById("pexelsKey").value.trim();
+  const supabaseKey = document.getElementById("supabaseKey").value.trim();
+  const query = document.getElementById("query").value.trim();
+  if(!pexelsKey || !supabaseKey){ alert("Please fill both keys."); return; }
+  if(!supabaseClient) supabaseClient = supabase.createClient(SUPABASE_URL, supabaseKey);
+
+  setStatus("Fetching images from Pexels...");
+  const results = await fetchPexels(pexelsKey, query);
+
+  const newRows = [];
+  preview.innerHTML = "";
+  for(const p of results){
+    if(seenPexelsIds.has(p.id)) continue;
+    seenPexelsIds.add(p.id);
+    const row = mapPhoto(p);
+    if(!row) continue;
+    if(existingFileUrls.has(row.file_url)) continue;
+    existingFileUrls.add(row.file_url);
+    newRows.push(row);
+    createCard(row);
+  }
+  setStatus("Uploading "+newRows.length+" unique images to Supabase...");
+  await uploadRows(newRows);
+});
+</script>
+</body>
+</html>
