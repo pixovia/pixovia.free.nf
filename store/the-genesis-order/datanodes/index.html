@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Genesis Order | DataNodes Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #9c27b0;
+            --accent-color: #2e3133;
+            --bg-dark: #0f1011;
+            --text-light: #f5f5f5;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Slideshow */
+        .bg-slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-slideshow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(15, 16, 17, 0.85), rgba(15, 16, 17, 0.95));
+            z-index: 1;
+        }
+
+        .bg-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0;
+            animation: slideShow 20s infinite;
+        }
+
+        .bg-slide:nth-child(1) {
+            background-image: url('https://images.gog-statics.com/51d7e6ca6aea9ff4c2f08ffdb28020c85c76a537ec4148a0fb8dd6f306ac2ef2_product_card_v2_mobile_slider_639.jpg');
+            animation-delay: 0s;
+        }
+
+        .bg-slide:nth-child(2) {
+            background-image: url('https://imgdownload.juxia.com/upload/202404/26/26171943134d6cQlmTxwk0h7jfn.jpg');
+            animation-delay: 5s;
+        }
+
+        .bg-slide:nth-child(3) {
+            background-image: url('https://i.ytimg.com/vi/q1vUTv0KSuU/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDZf6OSplayeELUzkny1AhX0E77XA');
+            animation-delay: 10s;
+        }
+
+        .bg-slide:nth-child(4) {
+            background-image: url('https://i.ytimg.com/vi/y3qpFDtbzGU/maxresdefault.jpg');
+            animation-delay: 15s;
+        }
+
+        @keyframes slideShow {
+            0%, 20% {
+                opacity: 1;
+            }
+            25%, 100% {
+                opacity: 0;
+            }
+        }
+
+        /* Navbar Styling */
+        nav {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(156, 39, 176, 0.3);
+            object-fit: cover;
+        }
+
+        /* Header / Branding Area */
+        .hero {
+            text-align: center;
+            padding: 6rem 1rem 4rem;
+            position: relative;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+            backdrop-filter: blur(2px);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 20px rgba(156, 39, 176, 0.5);
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+            letter-spacing: 1px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Content Container */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            background: rgba(15, 16, 17, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(156, 39, 176, 0.2);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(156, 39, 176, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .download-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid rgba(156, 39, 176, 0.2);
+            padding-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .download-info > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(156, 39, 176, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(156, 39, 176, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .download-info > div:hover {
+            background: rgba(156, 39, 176, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .download-info i {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Section Headers */
+        .section-header {
+            margin: 40px 0 20px;
+            padding: 15px 20px;
+            background: rgba(156, 39, 176, 0.1);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .section-header:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Link Section Styling */
+        .link-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 650px;
+            overflow-y: auto;
+            padding-right: 10px;
+            padding-top: 10px;
+        }
+
+        /* Scrollbar Styling */
+        .link-grid::-webkit-scrollbar { width: 6px; }
+        .link-grid::-webkit-scrollbar-track { background: transparent; }
+        .link-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+
+        .link-grid a {
+            background: rgba(255,255,255,0.05);
+            padding: 16px 22px;
+            border-radius: 10px;
+            display: block;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #f5f5f5;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            word-break: break-all;
+        }
+
+        .link-grid a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--primary-color);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .link-grid a:hover {
+            background: rgba(156, 39, 176, 0.1);
+            border-color: var(--primary-color);
+            transform: translateX(8px);
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.2);
+        }
+
+        .link-grid a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .link-grid a::after {
+            content: '\f0ab';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-left: 10px;
+            float: right;
+        }
+
+        .link-grid a:hover::after {
+            opacity: 1;
+        }
+
+        .link-grid br {
+            display: none;
+        }
+
+        .link-grid .section-note {
+            background: rgba(156, 39, 176, 0.05);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        footer {
+            text-align: center;
+            padding: 50px 40px;
+            opacity: 0.7;
+            font-size: 0.85rem;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .container {
+                padding: 30px 20px;
+                margin: 20px 15px;
+            }
+
+            .download-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .logo {
+                justify-content: center;
+            }
+
+            .logo img {
+                width: 40px;
+                height: 40px;
+            }
+
+            .bg-slide {
+                background-attachment: scroll;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-slideshow">
+    <div class="bg-slide"></div>
+    <div class="bg-slide"></div>
+    <div class="bg-slide"></div>
+    <div class="bg-slide"></div>
+</div>
+
+<nav>
+    <a href="#" class="logo">
+        <img src="https://img-grouvee-com.b-cdn.net/upload/cache/8a/95/8a95c3bd91cfc4b453ad02162dbabe64.jpg" alt="The Genesis Order Logo">
+        <span>PIXOVIA <span style="color:white">STORE</span></span>
+    </a>
+    <div>
+        <small style="opacity: 0.7;">https://pixovia.free.nf/store/the-genesis-order/datanodes/</small>
+    </div>
+</nav>
+
+<div class="hero">
+    <span class="badge">FITGIRL REPACK</span>
+    <h1>The Genesis Order</h1>
+    <p>Secure High-Speed Download via DataNodes</p>
+</div>
+
+<div class="container">
+    <div class="download-info">
+        <div><i class="fas fa-file-archive"></i> Format: RAR</div>
+        <div><i class="fas fa-server"></i> Server: DataNodes High Speed</div>
+        <div><i class="fas fa-check-circle"></i> Repack: FitGirl</div>
+    </div>
+
+    <div class="link-grid">
+        <div class="su-spoiler-content su-u-clearfix su-u-trim">
+            <a href="https://datanodes.to/iwbyovm5lcen/The_Genesis_Order_--_fitgirl-repacks.site_--_.part1.rar" target="_blank" rel="noopener nofollow">The_Genesis_Order_ &#8211;_fitgirl-repacks.site_ &#8211;_.part1.rar</a>
+            <br/>
+            <a href="https://datanodes.to/td5mscp5ekjt/The_Genesis_Order_--_fitgirl-repacks.site_--_.part2.rar" target="_blank" rel="noopener nofollow">The_Genesis_Order_ &#8211;_fitgirl-repacks.site_ &#8211;_.part2.rar</a>
+            <br/>
+            <a href="https://datanodes.to/6vr9atlgg7hx/The_Genesis_Order_--_fitgirl-repacks.site_--_.part3.rar" target="_blank" rel="noopener nofollow">The_Genesis_Order_ &#8211;_fitgirl-repacks.site_ &#8211;_.part3.rar</a>
+            <br/>
+            <a href="https://datanodes.to/d92o4rip9563/fg-selective-videos-hd.part01.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part01.rar</a>
+            <br/>
+            <a href="https://datanodes.to/0nqakuojoqfd/fg-selective-videos-hd.part02.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part02.rar</a>
+            <br/>
+            <a href="https://datanodes.to/zk4rykkumjp0/fg-selective-videos-hd.part03.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part03.rar</a>
+            <br/>
+            <a href="https://datanodes.to/qqfuvyx0hc0f/fg-selective-videos-hd.part04.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part04.rar</a>
+            <br/>
+            <a href="https://datanodes.to/ksnil4eiqtbp/fg-selective-videos-hd.part05.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part05.rar</a>
+            <br/>
+            <a href="https://datanodes.to/ckc53o46f1l2/fg-selective-videos-hd.part06.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part06.rar</a>
+            <br/>
+            <a href="https://datanodes.to/qbjmtri40jey/fg-selective-videos-hd.part07.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part07.rar</a>
+            <br/>
+            <a href="https://datanodes.to/yy8o9jj3zuo3/fg-selective-videos-hd.part08.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part08.rar</a>
+            <br/>
+            <a href="https://datanodes.to/jhl0yf5sfnv2/fg-selective-videos-hd.part09.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part09.rar</a>
+            <br/>
+            <a href="https://datanodes.to/ajidnxnfek06/fg-selective-videos-hd.part10.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part10.rar</a>
+            <br/>
+            <a href="https://datanodes.to/1ipqd7xrlons/fg-selective-videos-hd.part11.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part11.rar</a>
+            <br/>
+            <a href="https://datanodes.to/76ks1kfg6kaa/fg-selective-videos-hd.part12.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part12.rar</a>
+            <br/>
+            <a href="https://datanodes.to/gc4t4ytz4bgi/fg-selective-videos-hd.part13.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part13.rar</a>
+            <br/>
+            <a href="https://datanodes.to/vtwtqmdgrtpd/fg-selective-videos-hd.part14.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part14.rar</a>
+            <br/>
+            <a href="https://datanodes.to/kynh5vivdaec/fg-selective-videos-hd.part15.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-hd.part15.rar</a>
+            <br/>
+            <a href="https://datanodes.to/b2ct3i46cjp6/fg-selective-videos-sd.part1.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-sd.part1.rar</a>
+            <br/>
+            <a href="https://datanodes.to/txsy00c5ssi3/fg-selective-videos-sd.part2.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-sd.part2.rar</a>
+            <br/>
+            <a href="https://datanodes.to/3ahq2erpy2c3/fg-selective-videos-sd.part3.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-sd.part3.rar</a>
+            <br/>
+            <a href="https://datanodes.to/74rd0kh0k4se/fg-selective-videos-sd.part4.rar" target="_blank" rel="noopener nofollow">fg-selective-videos-sd.part4.rar</a>
+            <br/>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2024 Pixovia Store. All games are provided for backup purposes. <br>
+    All trademarks belong to their respective owners.
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uncharted legacy of theives | DataNodes Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --accent-color: #2e3133;
+            --bg-dark: #0f1011;
+            --text-light: #f5f5f5;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            background-image: linear-gradient(rgba(15, 16, 17, 0.85), rgba(15, 16, 17, 0.95)), 
+                              url('https://farm5.staticflickr.com/4874/45738670172_27aa041210_b.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Navbar Styling */
+        nav {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
+        }
+
+        /* Header / Branding Area */
+        .hero {
+            text-align: center;
+            padding: 6rem 1rem 4rem;
+            position: relative;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+            backdrop-filter: blur(2px);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://cdn.craft.cloud/22b11234-f633-4f7c-8ac2-099f2dba995c/assets/uploads/s20220107_ULTC_REVIEW_STILLS_1_WM.jpg') center/cover;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 20px rgba(211, 47, 47, 0.5);
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+            letter-spacing: 1px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Content Container */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            background: rgba(15, 16, 17, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(211, 47, 47, 0.2);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(211, 47, 47, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .download-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid rgba(211, 47, 47, 0.2);
+            padding-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .download-info > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(211, 47, 47, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(211, 47, 47, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .download-info > div:hover {
+            background: rgba(211, 47, 47, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .download-info i {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Link Section Styling */
+        .link-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 650px;
+            overflow-y: auto;
+            padding-right: 10px;
+            padding-top: 10px;
+        }
+
+        /* Scrollbar Styling */
+        .link-grid::-webkit-scrollbar { width: 6px; }
+        .link-grid::-webkit-scrollbar-track { background: transparent; }
+        .link-grid::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+
+        .link-grid a {
+            background: rgba(255,255,255,0.05);
+            padding: 16px 22px;
+            border-radius: 10px;
+            display: block;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #f5f5f5;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            word-break: break-all;
+        }
+
+        .link-grid a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--primary-color);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .link-grid a:hover {
+            background: rgba(211, 47, 47, 0.1);
+            border-color: var(--primary-color);
+            transform: translateX(8px);
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.2);
+        }
+
+        .link-grid a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .link-grid a::after {
+            content: '\f0ab';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-left: 10px;
+            float: right;
+        }
+
+        .link-grid a:hover::after {
+            opacity: 1;
+        }
+
+        .link-grid br {
+            display: none;
+        }
+
+        .link-grid .section-note {
+            background: rgba(211, 47, 47, 0.05);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        footer {
+            text-align: center;
+            padding: 50px 40px;
+            opacity: 0.7;
+            font-size: 0.85rem;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .container {
+                padding: 30px 20px;
+                margin: 20px 15px;
+            }
+
+            .download-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .logo {
+                justify-content: center;
+            }
+
+            .logo img {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo">
+        <img src="https://image.api.playstation.com/vulcan/ap/rnd/202111/2000/gTUWTlvPHzxFJ2JAxtDyI2eS.png" alt="uncharted Logo">
+        <span>PIXOVIA <span style="color:white">STORE</span></span>
+    </a>
+    <div>
+        <small style="opacity: 0.7;">https://pixovia.free.nf/store/uncharted-legacy-of-thieves-collection/datanodes/</small>
+    </div>
+</nav>
+
+<div class="hero">
+    <span class="badge">FITGIRL REPACK</span>
+    <h1>Uncharted Legacy of Thieves Collection</h1>
+    <p>Secure High-Speed Download via DataNodes</p>
+</div>
+
+<div class="container">
+    <div class="download-info">
+        <div><i class="fas fa-file-archive"></i> Format: RAR</div>
+        <div><i class="fas fa-server"></i> Server: DataNodes High Speed</div>
+        <div><i class="fas fa-check-circle"></i> Repack: FitGirl</div>
+    </div>
+
+    <div class="link-grid">
+    
+
+        <div class="section-note" style="margin-top: 30px;">
+            <strong>Download links for original Uncharted repack</strong>
+        </div>
+
+        <div class="su-spoiler-content su-u-clearfix su-u-trim">
+            
+                                                <a href="https://datanodes.to/iikcoxrsrqv3/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part01.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/iikcoxrsrqv3/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part01.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/r5ujfqrt73ql/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part02.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/r5ujfqrt73ql/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part02.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/911qhdggjlvn/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part03.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/911qhdggjlvn/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part03.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/hp18q070oqy2/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part04.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/hp18q070oqy2/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part04.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/1amoghees9rx/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part05.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/1amoghees9rx/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part05.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/zmpjlo3qepjl/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part06.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/zmpjlo3qepjl/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part06.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/2g5bum47speu/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part07.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/2g5bum47speu/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part07.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/z0s35kvnu7h6/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part08.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/z0s35kvnu7h6/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part08.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/0yowgm2iztkl/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part09.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/0yowgm2iztkl/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part09.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ms9uo4hdckw9/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part10.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ms9uo4hdckw9/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part10.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/4qedn9u20p65/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part11.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/4qedn9u20p65/Uncharted_-_LoTC_–_fitgirl-repacks.site_–_.part11.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/vm1f3ljva6rf/fg-optional-arabic.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/vm1f3ljva6rf/fg-optional-arabic.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/32soebv3909a/fg-optional-bonus-soundtracks.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/32soebv3909a/fg-optional-bonus-soundtracks.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/dya70o0ianjg/fg-optional-brazilian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/dya70o0ianjg/fg-optional-brazilian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/7wg5btoti8py/fg-optional-dutch.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/7wg5btoti8py/fg-optional-dutch.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/2aeger5asjqq/fg-optional-french.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/2aeger5asjqq/fg-optional-french.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/wem76dcc5l9j/fg-optional-german.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/wem76dcc5l9j/fg-optional-german.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/d79gvsg66sa6/fg-optional-italian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/d79gvsg66sa6/fg-optional-italian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/3qhf9x64vk5n/fg-optional-mexican.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/3qhf9x64vk5n/fg-optional-mexican.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/v32w5x7zft9f/fg-optional-polish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/v32w5x7zft9f/fg-optional-polish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ke4ynkadk9um/fg-optional-portuguese.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/ke4ynkadk9um/fg-optional-portuguese.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/5jr2qiv3wgvz/fg-optional-russian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/5jr2qiv3wgvz/fg-optional-russian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/iafcesnk290h/fg-optional-spanish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/iafcesnk290h/fg-optional-spanish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/a3nzv3pyd7ht/fg-optional-turkish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/a3nzv3pyd7ht/fg-optional-turkish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/7g6p2amv3blq/fg-tll.part01.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/7g6p2amv3blq/fg-tll.part01.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/5p08jb1i3k3p/fg-tll.part02.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/5p08jb1i3k3p/fg-tll.part02.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/c8xz09fcocdq/fg-tll.part03.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/c8xz09fcocdq/fg-tll.part03.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/n5plrz9myyom/fg-tll.part04.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/n5plrz9myyom/fg-tll.part04.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/lrfpukitjsk6/fg-tll.part05.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/lrfpukitjsk6/fg-tll.part05.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/gucyuy2k532j/fg-tll.part06.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/gucyuy2k532j/fg-tll.part06.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/jrdgqp5vc4k2/fg-tll.part07.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/jrdgqp5vc4k2/fg-tll.part07.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/att5ianlcvt2/fg-tll.part08.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/att5ianlcvt2/fg-tll.part08.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/t9a1jletyn5f/fg-tll.part09.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/t9a1jletyn5f/fg-tll.part09.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ai0fli7guthg/fg-tll.part10.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ai0fli7guthg/fg-tll.part10.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/j98y5lit780b/fg-tll.part11.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/j98y5lit780b/fg-tll.part11.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/3ov9ze4simq0/fg-tll.part12.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/3ov9ze4simq0/fg-tll.part12.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/5j8v4l5vjosm/fg-tll.part13.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/5j8v4l5vjosm/fg-tll.part13.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/seo5n7n746rp/fg-tll.part14.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/seo5n7n746rp/fg-tll.part14.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/erv2rp292lsg/fg-tll.part15.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/erv2rp292lsg/fg-tll.part15.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/z0mczn14onsq/fg-tll.part16.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/z0mczn14onsq/fg-tll.part16.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/6uykp786kizq/fg-tll.part17.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/6uykp786kizq/fg-tll.part17.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/kfeq80gzk889/fg-tll.part18.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/kfeq80gzk889/fg-tll.part18.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/u3x2ejdjks1f/fg-tll.part19.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/u3x2ejdjks1f/fg-tll.part19.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/a0wwd2tn1os7/fg-tll.part20.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/a0wwd2tn1os7/fg-tll.part20.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/vvggjfglfrdm/fg-tll.part21.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/vvggjfglfrdm/fg-tll.part21.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/f6ex97tf5m4b/fg-tll.part22.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/f6ex97tf5m4b/fg-tll.part22.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ubr83hy4dfex/fg-tll.part23.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ubr83hy4dfex/fg-tll.part23.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/g0lfxugxrlv4/fg-tll.part24.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/g0lfxugxrlv4/fg-tll.part24.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/0qklujbjc7vj/fg-tll.part25.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/0qklujbjc7vj/fg-tll.part25.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/7ys3vmho27zx/fg-tll.part26.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/7ys3vmho27zx/fg-tll.part26.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ujqwmcaarb4h/fg-tll.part27.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ujqwmcaarb4h/fg-tll.part27.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/dk78zj2k74qf/fg-tll.part28.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/dk78zj2k74qf/fg-tll.part28.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/6msay3cim5jx/fg-tll.part29.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/6msay3cim5jx/fg-tll.part29.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/hkpvni8fb0d1/fg-tll.part30.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/hkpvni8fb0d1/fg-tll.part30.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ghzrvzc3z9wu/fg-tll-optional-arabic.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/ghzrvzc3z9wu/fg-tll-optional-arabic.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/dsw2b7x9foxo/fg-tll-optional-brazilian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/dsw2b7x9foxo/fg-tll-optional-brazilian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/180gnjbe0t47/fg-tll-optional-dutch.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/180gnjbe0t47/fg-tll-optional-dutch.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/3sthqow0luvq/fg-tll-optional-french.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/3sthqow0luvq/fg-tll-optional-french.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ukpmdx13g9da/fg-tll-optional-german.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/ukpmdx13g9da/fg-tll-optional-german.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/qkfvb4399hfl/fg-tll-optional-italian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/qkfvb4399hfl/fg-tll-optional-italian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/6giaoa1mesvl/fg-tll-optional-mexican.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/6giaoa1mesvl/fg-tll-optional-mexican.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/osphz52g2h4x/fg-tll-optional-polish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/osphz52g2h4x/fg-tll-optional-polish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/k40nlte0j9l4/fg-tll-optional-portuguese.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/k40nlte0j9l4/fg-tll-optional-portuguese.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/uafcztgd3r3f/fg-tll-optional-russian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/uafcztgd3r3f/fg-tll-optional-russian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/mke7rzt4zsiu/fg-tll-optional-spanish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/mke7rzt4zsiu/fg-tll-optional-spanish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/oofrgobklvia/fg-tll-optional-turkish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/oofrgobklvia/fg-tll-optional-turkish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/mrmv9zy3s2kn/fg-u4.part01.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/mrmv9zy3s2kn/fg-u4.part01.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/cw1qmrjfo7gn/fg-u4.part02.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/cw1qmrjfo7gn/fg-u4.part02.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/qalx50cp6otv/fg-u4.part03.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/qalx50cp6otv/fg-u4.part03.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/e6i6e05261r1/fg-u4.part04.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/e6i6e05261r1/fg-u4.part04.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ngmcyd2xwoqt/fg-u4.part05.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ngmcyd2xwoqt/fg-u4.part05.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/xrwyuei3f5fn/fg-u4.part06.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/xrwyuei3f5fn/fg-u4.part06.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/5kopksp8l0yc/fg-u4.part07.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/5kopksp8l0yc/fg-u4.part07.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/x6qikys2aug0/fg-u4.part08.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/x6qikys2aug0/fg-u4.part08.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/1latophb155e/fg-u4.part09.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/1latophb155e/fg-u4.part09.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/pkh52xduo4jx/fg-u4.part10.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/pkh52xduo4jx/fg-u4.part10.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/w73wea0dvmzj/fg-u4.part11.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/w73wea0dvmzj/fg-u4.part11.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/cfq3ypk0usnc/fg-u4.part12.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/cfq3ypk0usnc/fg-u4.part12.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/7r2hwde2hi5u/fg-u4.part13.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/7r2hwde2hi5u/fg-u4.part13.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/iv039gr2huhd/fg-u4.part14.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/iv039gr2huhd/fg-u4.part14.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/xs69xy0cqfic/fg-u4.part15.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/xs69xy0cqfic/fg-u4.part15.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/lgd72qaqtdd9/fg-u4.part16.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/lgd72qaqtdd9/fg-u4.part16.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/dx1yjghr4gwo/fg-u4.part17.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/dx1yjghr4gwo/fg-u4.part17.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/xxjq7ry1icfa/fg-u4.part18.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/xxjq7ry1icfa/fg-u4.part18.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/0p0o70m1fapw/fg-u4.part19.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/0p0o70m1fapw/fg-u4.part19.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/qapis04380d7/fg-u4.part20.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/qapis04380d7/fg-u4.part20.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/4j5w9be2n73p/fg-u4.part21.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/4j5w9be2n73p/fg-u4.part21.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/c7smbks9881v/fg-u4.part22.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/c7smbks9881v/fg-u4.part22.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/zonfh9xaf1dq/fg-u4.part23.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/zonfh9xaf1dq/fg-u4.part23.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/kyeksqqml73m/fg-u4.part24.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/kyeksqqml73m/fg-u4.part24.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/471pzx9vwmoc/fg-u4.part25.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/471pzx9vwmoc/fg-u4.part25.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/lvc518k5y23g/fg-u4.part26.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/lvc518k5y23g/fg-u4.part26.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/n8jeymblj4w9/fg-u4.part27.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/n8jeymblj4w9/fg-u4.part27.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/mpz0mcgmlbu5/fg-u4.part28.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/mpz0mcgmlbu5/fg-u4.part28.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/tzumbik0g8x7/fg-u4.part29.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/tzumbik0g8x7/fg-u4.part29.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/k9dwc6jv8s7d/fg-u4.part30.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/k9dwc6jv8s7d/fg-u4.part30.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/m8ilq69zwvcp/fg-u4.part31.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/m8ilq69zwvcp/fg-u4.part31.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/6c9v3avwmccx/fg-u4.part32.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/6c9v3avwmccx/fg-u4.part32.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/57qch5btumlb/fg-u4.part33.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/57qch5btumlb/fg-u4.part33.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/p7zgc1yr42gk/fg-u4.part34.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/p7zgc1yr42gk/fg-u4.part34.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/h82uc37r7htj/fg-u4.part35.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/h82uc37r7htj/fg-u4.part35.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/8zlmgx35ir2d/fg-u4.part36.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/8zlmgx35ir2d/fg-u4.part36.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/kow1415prb19/fg-u4.part37.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/kow1415prb19/fg-u4.part37.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/gz471nq757y6/fg-u4.part38.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/gz471nq757y6/fg-u4.part38.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/pmly3hkk2h8s/fg-u4.part39.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/pmly3hkk2h8s/fg-u4.part39.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/faxxzjszwz1u/fg-u4.part40.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/faxxzjszwz1u/fg-u4.part40.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/ouxs1thd322g/fg-u4.part41.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/ouxs1thd322g/fg-u4.part41.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/wpdo9obsjlwm/fg-u4.part42.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/wpdo9obsjlwm/fg-u4.part42.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/amgqm1hrmzua/fg-u4.part43.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/amgqm1hrmzua/fg-u4.part43.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/uv2eja6yb1z1/fg-u4.part44.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/uv2eja6yb1z1/fg-u4.part44.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/acfph53q9htj/fg-u4.part45.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/acfph53q9htj/fg-u4.part45.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/43yt7a9m1z6y/fg-u4.part46.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/43yt7a9m1z6y/fg-u4.part46.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/qakkgrh4my1f/fg-u4.part47.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/qakkgrh4my1f/fg-u4.part47.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/xsc2qpwvmf0z/fg-u4.part48.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/xsc2qpwvmf0z/fg-u4.part48.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/x5q60w5qa1qt/fg-u4.part49.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/x5q60w5qa1qt/fg-u4.part49.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/f1nhsviqutj4/fg-u4.part50.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/f1nhsviqutj4/fg-u4.part50.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/uq25exd10unq/fg-u4.part51.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/uq25exd10unq/fg-u4.part51.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/2z0wv4bemtg8/fg-u4.part52.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/2z0wv4bemtg8/fg-u4.part52.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/aerxnpuacf3r/fg-u4.part53.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/aerxnpuacf3r/fg-u4.part53.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/55ibg7asqzym/fg-u4.part54.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/55ibg7asqzym/fg-u4.part54.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/f9k0ko3z5y3x/fg-u4.part55.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/f9k0ko3z5y3x/fg-u4.part55.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/4focx9bsle5w/fg-u4.part56.rar" target="_blank" rel="noopener nofollow">https://datanodes.to/4focx9bsle5w/fg-u4.part56.rar</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/o7nnmvp7as0q/fg-u4-optional-arabic.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/o7nnmvp7as0q/fg-u4-optional-arabic.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/dybqzh49rp8l/fg-u4-optional-brazilian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/dybqzh49rp8l/fg-u4-optional-brazilian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/avoivf4lsvy3/fg-u4-optional-dutch.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/avoivf4lsvy3/fg-u4-optional-dutch.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/fh0a7g9z8mg8/fg-u4-optional-french.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/fh0a7g9z8mg8/fg-u4-optional-french.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/39pem32xfw6g/fg-u4-optional-german.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/39pem32xfw6g/fg-u4-optional-german.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/uykbp4jddk06/fg-u4-optional-italian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/uykbp4jddk06/fg-u4-optional-italian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/yqrzr8dgo1t5/fg-u4-optional-mexican.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/yqrzr8dgo1t5/fg-u4-optional-mexican.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/hek889g42hno/fg-u4-optional-polish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/hek889g42hno/fg-u4-optional-polish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/fsqmk33baycw/fg-u4-optional-portuguese.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/fsqmk33baycw/fg-u4-optional-portuguese.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/84sbrm1qk5ky/fg-u4-optional-russian.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/84sbrm1qk5ky/fg-u4-optional-russian.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/qxzpp3rujbsj/fg-u4-optional-spanish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/qxzpp3rujbsj/fg-u4-optional-spanish.bin</a>
+                                                <br/>
+                                                <a href="https://datanodes.to/p4ckcwhm8r7i/fg-u4-optional-turkish.bin" target="_blank" rel="noopener nofollow">https://datanodes.to/p4ckcwhm8r7i/fg-u4-optional-turkish.bin</a>
+                                                <br/>
+                                            
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2024 Pixovia Store. All games are provided for backup purposes. <br>
+    All trademarks belong to Rockstar Games.
+</footer>
+
+</body>
+</html>

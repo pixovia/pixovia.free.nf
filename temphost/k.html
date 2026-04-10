@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eduport | Pixovia Learn – Courses</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+    body { font-family: "Inter", sans-serif; background-color: #f8f9fd; }
+    .section-card { background: white; border-radius: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); overflow: hidden; }
+    .section-header:hover { background-color: #f1f5f9; }
+    .course-badge { background-color: #eef2ff; color: #4338ca; font-weight: 600; border-radius: 12px; padding: 4px 12px; font-size: 0.75rem; }
+    .course-card { transition: transform .2s, box-shadow .2s; cursor: pointer; }
+    .course-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+    .rotate-90 { transform: rotate(90deg); }
+    @keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)} }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+
+  <!-- HEADER / HERO -->
+  <header class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-blue-700 to-blue-500"></div>
+    <div class="absolute inset-0 opacity-10 bg-[url('https://img-mm.manoramaonline.com/content/dam/mm/mo/education/education-news/images/2024/3/15/eduport-academy-campus-image-one.jpg')]"></div>
+
+    <div class="relative max-w-6xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row items-center justify-between text-white">
+      <!-- LEFT: Logos, Title & Search -->
+      <div class="space-y-6 max-w-xl">
+        <div class="flex items-center space-x-4">
+          <img src="https://media.licdn.com/dms/image/v2/D560BAQEJe_G69SfZXA/company-logo_200_200/company-logo_200_200/0/1731746328968?e=2147483647&v=beta&t=i6VRtIcoqeb3nRbsqcj4KPnMuQ5AB_f81Ww18jQUGXQ"
+               class="w-12 h-12 rounded-full border-2 border-white shadow-md" alt="Eduport">
+          <div class="w-px h-10 bg-white/40"></div>
+          <img src="https://pixovia.pages.dev/icon-coloured-closeup.jpg"
+               class="w-12 h-12 rounded-full border-2 border-white shadow-md" alt="Pixovia">
+               <span class="text-white text-3xl font-semibold ml-2">Learn</span>
+        </div>
+        
+
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
+          Explore <span class="text-yellow-300">Courses</span> for Every Learner
+        </h1>
+        <p class="text-blue-100 text-sm md:text-base max-w-md">
+          From foundation to entrance prep — find Kerala & CBSE classes, crash batches, and repeater programs crafted for success.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="mt-4">
+          <div class="flex bg-white rounded-full shadow-md overflow-hidden max-w-md">
+            <input id="searchInput" type="text" placeholder="Search courses..."
+                   class="flex-1 px-4 py-2 text-gray-700 outline-none text-sm md:text-base"
+                   oninput="filterCourses()">
+            <button class="bg-indigo-600 px-5 text-white font-semibold hover:bg-indigo-700 transition">
+              <i class="fa-solid fa-search"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Illustration (desktop only) -->
+      <div class="mt-10 md:mt-0 hidden md:block">
+        <img src="https://eduport.app/wp-content/uploads/2025/03/Faculties1.webp"
+             alt="Learning Illustration"
+             class="w-72 md:w-96 drop-shadow-xl animate-float">
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-5xl mx-auto px-4 md:px-8 space-y-6 mt-10" id="courses-container">
+    <p class="text-center text-gray-400">Loading courses...</p>
+  </main>
+
+  <!-- Add Supabase client -->
+<script type="module">
+  import { supabase, getCourses } from "./supabase.js";
+
+  let allCourses = [];
+
+  async function loadCourses() {
+    const container = document.getElementById("courses-container");
+    container.innerHTML = `<p class="text-center text-gray-400">Loading courses...</p>`;
+
+    try {
+      const data = await getCourses();
+
+      if (!data?.length) {
+        container.innerHTML = `<p class="text-center text-gray-500">No courses found.</p>`;
+        return;
+      }
+
+      const grouped = groupCourses(data);
+      allCourses = grouped;
+      renderCourses(allCourses);
+    } catch (e) {
+      console.error(e);
+      container.innerHTML = `<p class="text-center text-red-500">Failed to load from Supabase.</p>`;
+    }
+  }
+
+  function groupCourses(data) {
+    const groups = {};
+    data.forEach(row => {
+      const std = row.std || "Other";
+      if (!groups[std]) groups[std] = new Set();
+      if (row.course) groups[std].add(row.course);
+    });
+
+    return Object.keys(groups).map((std, i) => ({
+      id: i,
+      title: std,
+      courses: Array.from(groups[std]).map(c => ({ title: c }))
+    }));
+  }
+
+  function renderCourses(classes) {
+    const container = document.getElementById("courses-container");
+    container.innerHTML = "";
+
+    classes.forEach(category => {
+      if (!category.courses.length) return;
+
+      const section = document.createElement("section");
+      section.className = "section-card";
+
+      const icons = {
+        "Foundation": "fa-rocket text-purple-600 bg-purple-100",
+        "Class 11": "fa-flask text-blue-600 bg-blue-100",
+        "Class 12": "fa-graduation-cap text-green-600 bg-green-100",
+        "Repeater": "fa-repeat text-rose-600 bg-rose-100",
+        "Crash": "fa-bolt text-orange-600 bg-orange-100"
+      };
+      const iconMatch = Object.keys(icons).find(k => category.title.includes(k));
+      const iconClass = icons[iconMatch] || "fa-book text-gray-600 bg-gray-100";
+
+      section.innerHTML = `
+        <div class="section-header flex items-center justify-between p-5 cursor-pointer transition">
+          <div class="flex items-center">
+            <div class="w-10 h-10 flex items-center justify-center rounded-xl mr-3 text-xl ${iconClass.split(' ').slice(1).join(' ')}">
+              <i class="fa-solid ${iconClass.split(' ')[0]}"></i>
+            </div>
+            <h2 class="text-lg md:text-xl font-bold text-gray-800">${category.title}</h2>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gray-500 transition-transform"></i>
+        </div>
+        <div class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-5 pb-5" id="grid-${category.id}"></div>
+      `;
+      container.appendChild(section);
+
+      const header = section.querySelector(".section-header");
+      const grid = section.querySelector(`#grid-${category.id}`);
+      const chevron = section.querySelector(".fa-chevron-right");
+
+      header.onclick = () => {
+        const isOpen = !grid.classList.contains("hidden");
+        document.querySelectorAll("[id^=grid-]").forEach(g => g.classList.add("hidden"));
+        document.querySelectorAll(".fa-chevron-right").forEach(c => c.classList.remove("rotate-90"));
+        if (!isOpen) {
+          grid.classList.remove("hidden");
+          chevron.classList.add("rotate-90");
+        }
+      };
+
+      category.courses.forEach(course => {
+        const card = document.createElement("div");
+        card.className = "course-card p-4 bg-gray-50 rounded-2xl";
+        card.innerHTML = `
+          <p class="font-semibold text-gray-800">${course.title}</p>
+          <span class="course-badge">${category.title}</span>
+        `;
+        card.onclick = () => {
+          sessionStorage.setItem("std", category.title);
+          sessionStorage.setItem("course", course.title);
+          window.location.href = "s.html";
+        };
+        grid.appendChild(card);
+      });
+    });
+  }
+
+  function filterCourses() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    if (!query.trim()) {
+      renderCourses(allCourses);
+      return;
+    }
+    const filtered = allCourses
+      .map(group => ({
+        ...group,
+        courses: group.courses.filter(c => c.title.toLowerCase().includes(query))
+      }))
+      .filter(g => g.courses.length > 0);
+    renderCourses(filtered);
+  }
+
+  loadCourses();
+</script>
+</body>
+</html>

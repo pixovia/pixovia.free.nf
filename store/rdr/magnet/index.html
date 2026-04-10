@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixovia Store - Redirecting...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0; /* Slate 200 */
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Decorative Background Elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="glass-panel rounded-2xl p-8 max-w-md w-full text-center transform transition-all hover:scale-[1.01] duration-300">
+        
+        <!-- Logo / Brand -->
+        <div class="mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mx-auto flex items-center justify-center shadow-lg mb-4">
+                <i class="fa-solid fa-gamepad text-2xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                Pixovia Store
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">Digital Content Delivery</p>
+        </div>
+
+        <!-- Status Area -->
+        <div class="space-y-6">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="loader"></div>
+                <p class="text-sm font-medium text-blue-300 animate-pulse">Launching your torrent client...</p>
+            </div>
+
+            <!-- File Info Box -->
+            <div class="bg-slate-800/50 rounded-lg p-4 text-left border border-slate-700/50">
+                <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Incoming Transfer</p>
+                <p id="fileName" class="text-sm text-slate-200 break-words font-mono line-clamp-3">
+                    Fetching metadata...
+                </p>
+            </div>
+
+            <p class="text-xs text-slate-500">
+                This link connects to the BitTorrent network. You need a client like qBittorrent installed.
+            </p>
+
+            <!-- Manual Button -->
+            <button onclick="openMagnet()" class="w-full group relative px-6 py-3 font-bold text-white rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-all shadow-lg hover:shadow-indigo-500/25">
+                <span class="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
+                <span class="relative flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-magnet"></i>
+                    Open Magnet Link
+                </span>
+            </button>
+
+            <div class="pt-4 border-t border-slate-700/50">
+                 <button onclick="copyLink()" class="text-xs text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-1 mx-auto">
+                    <i class="fa-regular fa-copy"></i>
+                    Copy Link Address
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-xs text-slate-600">
+        <p>&copy; 2026 Pixovia Store. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // The Magnet Link provided by the user
+        const MAGNET_LINK = "magnet:?xt=urn:btih:404121CE54D29FCB3BDD635A78826DFE3D9258DF&dn=Red+Dead+Redemption+%28v1.0.40.57107+%2B+Bonus+Content%2C+MULTi13%29+%5BFitGirl+Repack%2C+Selective+Download+-+from+5.4+GB%5D&tr=udp%3A%2F%2Fopentor.net%3A6969&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.theoks.net%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.ccp.ovh%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=https%3A%2F%2Ftracker.tamersunion.org%3A443%2Fannounce&tr=udp%3A%2F%2Fexplodie.org%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.bt4g.com%3A2095%2Fannounce&tr=udp%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.filemail.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker1.bt.moack.co.kr%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fcoppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce";
+
+        // Function to extract file name from magnet link for display
+        function getFileName(magnet) {
+            try {
+                const urlParams = new URLSearchParams(magnet.replace('magnet:?', ''));
+                const dn = urlParams.get('dn');
+                return dn ? decodeURIComponent(dn) : 'Unknown File';
+            } catch (e) {
+                return 'Unknown File';
+            }
+        }
+
+        // Display the file name
+        document.getElementById('fileName').textContent = getFileName(MAGNET_LINK);
+
+        // Function to trigger the redirect
+        function openMagnet() {
+            window.location.href = MAGNET_LINK;
+        }
+
+        // Copy function
+        function copyLink() {
+            // Using standard clipboard API, with fallback for iframes if necessary
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(MAGNET_LINK).then(() => {
+                    const btn = document.querySelector('button[onclick="copyLink()"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check text-green-400"></i> Copied!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                });
+            } else {
+                // Fallback approach
+                const textarea = document.createElement('textarea');
+                textarea.value = MAGNET_LINK;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert("Link copied to clipboard!");
+            }
+        }
+
+        // Auto-redirect on load after a brief delay
+        window.onload = function() {
+            setTimeout(() => {
+                openMagnet();
+            }, 1500); // 1.5 second delay to let UI render and user see what's happening
+        };
+    </script>
+</body>
+</html>
